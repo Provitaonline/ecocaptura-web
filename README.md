@@ -1,6 +1,12 @@
-# Nuxt Minimal Starter
+# ecocaptura-web
 
-Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
+## **Currently under development**
+
+Web front of ecocaptura's photos-based ecological data collection tool.
+
+## Features
+
+TBD
 
 ## Setup
 
@@ -72,4 +78,6 @@ yarn preview
 bun run preview
 ```
 
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+---
+
+*This project is being developed with the assistance of Google Gemini.*
