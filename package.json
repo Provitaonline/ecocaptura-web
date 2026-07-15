@@ -1,0 +1,31 @@
+{
+  "name": "ecocaptura-web",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare"
+  },
+  "dependencies": {
+    "@fortawesome/fontawesome-free": "^7.3.0",
+    "@mdi/font": "^7.4.47",
+    "@pinia/nuxt": "^1.0.0",
+    "buefy": "^3.0.8",
+    "cesium": "^1.143.0",
+    "nuxt": "^4.4.8",
+    "pinia": "^4.0.2",
+    "vue": "^3.5.39",
+    "vue-router": "^5.1.0"
+  },
+  "allowScripts": {
+    "@parcel/watcher@2.5.6": true,
+    "esbuild@0.28.1": true,
+    "fsevents@2.3.3": true
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.1"
+  }
+}
