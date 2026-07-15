@@ -33,6 +33,12 @@ import { Cartesian3, Ion, Math as CesiumMath, Terrain, Viewer, UrlTemplateImager
 //import * as Cesium from 'cesium'
 import 'cesium/Build/Cesium/Widgets/widgets.css'
 
+declare global {
+  interface Window {
+    CESIUM_BASE_URL: string
+  }
+}
+
 const config = useRuntimeConfig()
 
 // Global configuration for Cesium assets
