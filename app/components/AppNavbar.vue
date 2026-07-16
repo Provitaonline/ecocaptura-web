@@ -42,7 +42,7 @@
             :key="l.code"
             @click="setLocale(l.code)"
           >
-            {{ $t(`flags.${l.code}`) }} {{ $t(`language_names.${l.code}`) }}
+            {{ $t(`flags.${l.code}`) }}&nbsp;&nbsp;&nbsp;{{ $t(`language_names.${l.code}`) }}
           </b-navbar-item>
         </b-navbar-dropdown>
     </template>
