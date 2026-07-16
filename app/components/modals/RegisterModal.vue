@@ -22,7 +22,6 @@
 </template>
 
 <script setup lang="ts">
-import { BModal, BInput, BField, BButton } from 'buefy'
 import { ref } from 'vue'
 import { useAuthStore } from '~/scripts/stores/auth'
 

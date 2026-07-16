@@ -54,7 +54,6 @@
 </template>
 
 <script setup lang="ts">
-import { BNavbar, BNavbarItem, BNavbarDropdown, BIcon, BButton } from 'buefy'
 import RegisterModal from '~/components/modals/RegisterModal.vue'
 import { onMounted } from 'vue'
 import { useAuthStore } from '~/scripts/stores/auth'

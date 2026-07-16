@@ -2,11 +2,15 @@ import { resolve } from 'path'
 
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
-    css: [
-      'buefy/dist/css/buefy.css',
-        '@mdi/font/css/materialdesignicons.min.css'
-    ],
+  css: [
+    'buefy/dist/css/buefy.css',
+    '@mdi/font/css/materialdesignicons.min.css'
+  ],
   srcDir: 'app/',
+
+  plugins: [
+    { src: '~/plugins/buefy.ts', mode: 'client' }
+  ],
   
   vite: {
     optimizeDeps: {
