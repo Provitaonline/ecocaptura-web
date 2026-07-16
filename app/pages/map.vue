@@ -3,9 +3,7 @@
     <SidePanel class="sidebar" />
 
     <div class="map-wrapper">
-	<ClientOnly>
       <InteractiveMap />
-	</ClientOnly>
     </div>
   </div>
 </template>
@@ -13,7 +11,7 @@
 <style scoped>
 .main-layout {
   display: flex;
-  height: calc(100vh - 3.5rem);
+  height: calc(100vh - 10rem);
   overflow: hidden;
 }
 
@@ -24,10 +22,29 @@
 }
 
 .map-wrapper {
-  flex-grow: 1; /* Automatically takes remaining width */
-  min-width: 0; /* Prevents overflow */
-  min-height: 0; /* Prevents the "Stable Height Chain" break */
+  flex-grow: 1; 
+  min-width: 0; 
+  min-height: 0; 
   position: relative;
   transition: none !important;
+}
+
+@media (max-width: 768px) {
+  .main-layout {
+    flex-direction: column;
+    height: 100vh; 
+  }
+
+  .sidebar {
+    width: 100%;
+    height: auto; 
+    max-height: 40vh;
+  }
+
+  .map-wrapper {
+    flex-grow: 1;
+    min-height: 300px;
+    width: 100%;
+  }
 }
 </style>
