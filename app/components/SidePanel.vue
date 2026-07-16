@@ -2,7 +2,7 @@
   <aside class="side-panel">
     <div class="side-panel-content">
       <nav class="panel">
-        <p class="panel-heading has-text-centered is-size-5">
+        <p class="panel-heading is-radiusless has-text-centered is-size-5">
           Recent Captures
         </p>
         <a class="panel-block is-active">

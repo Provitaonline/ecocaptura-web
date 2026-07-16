@@ -4,7 +4,8 @@ export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   css: [
     'buefy/dist/css/buefy.css',
-    '@mdi/font/css/materialdesignicons.min.css'
+    '@mdi/font/css/materialdesignicons.min.css',
+    '~/assets/css/main.css'
   ],
   srcDir: 'app/',
 

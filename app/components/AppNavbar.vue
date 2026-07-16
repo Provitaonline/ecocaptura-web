@@ -1,5 +1,5 @@
 <template>
-  <b-navbar>
+  <b-navbar class="is-light">
     <template #brand>
       <b-navbar-item tag="router-link" :to="{ path: '/' }">
         <div style="width: 40px; height: 40px; background: #3273dc; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">
