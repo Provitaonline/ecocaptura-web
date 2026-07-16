@@ -1,3 +1,5 @@
+import { resolve } from 'path'
+
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
     css: [
@@ -35,7 +37,17 @@ export default defineNuxtConfig({
       ]
     }
   },
+  i18n: {
+    locales: [
+      { code: 'en', iso: 'en-US', name: 'English', file: 'en.json' },
+      { code: 'es', iso: 'es-VE', name: 'Español', file: 'es.json' }
+    ],
+    lazy: true,
+    defaultLocale: 'es',
+    strategy: 'prefix_except_default'
+  } as any,
   modules: [
-    '@pinia/nuxt'
+    '@pinia/nuxt',
+    '@nuxtjs/i18n'
   ] 
 })

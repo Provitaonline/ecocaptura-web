@@ -32,6 +32,20 @@
           </div>
         </b-navbar-dropdown>
       </b-navbar-item>
+      <b-navbar-dropdown right arrowless>
+        <template #label>
+            <!-- Flag as the menu icon -->
+            <span>{{ $t(`flags.${locale}`) }}</span>
+          </template>
+
+          <b-navbar-item 
+            v-for="l in allLocales" 
+            :key="l.code"
+            @click="setLocale(l.code)"
+          >
+            {{ $t(`flags.${l.code}`) }} {{ $t(`language_names.${l.code}`) }}
+          </b-navbar-item>
+        </b-navbar-dropdown>
     </template>
   </b-navbar>
 
@@ -55,6 +69,15 @@ declare global {
     handleCredentialResponse: (response: any) => void
   }
 }
+
+const { locale, locales, setLocale } = useI18n()
+const switchLocalePath = useSwitchLocalePath()
+
+const allLocales = computed(() => locales.value)
+
+const currentLocale = computed(() => 
+  locales.value.find(l => l.code === locale.value)!
+)
 
 const closeDropdown = () => {
   if (authDropdown.value) {

@@ -1,0 +1,21 @@
+{
+  "nav": {
+    "login": "Login",
+    "logout": "Logout",
+    "welcome": "Logged in as {email}"
+  },
+  "auth": {
+    "modal_title": "Welcome to EcoCaptura!",
+    "modal_desc": "Please choose a unique username to complete your account.",
+    "username_label": "Username",
+    "submit": "Complete Registration"
+  },
+  "language_names": {
+    "en": "English",
+    "es": "Español"
+  },
+  "flags": {
+    "en": "🇺🇸",
+    "es": "🇻🇪"
+  }
+}
