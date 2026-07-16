@@ -34,7 +34,6 @@
       </b-navbar-item>
       <b-navbar-dropdown right arrowless>
         <template #label>
-            <!-- Flag as the menu icon -->
             <span>{{ $t(`flags.${locale}`) }}</span>
           </template>
 
