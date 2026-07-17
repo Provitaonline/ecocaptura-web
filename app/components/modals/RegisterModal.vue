@@ -22,25 +22,27 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useAuthStore } from '~/scripts/stores/auth'
 
 const auth = useAuthStore()
 const username = ref('')
 const isRegistering = ref(false)
-const error = ref('')
+
+const error = computed(() => auth.registrationError)
 
 const handleRegister = async () => {
   if (!username.value) {
-    error.value = 'Username is required'
     return
   }
   
   isRegistering.value = true
   try {
-    await auth.completeRegistration(username.value)
+    // Pass the token from the store to the action
+    await auth.completeRegistration(auth.idToken, username.value)
   } catch (e) {
-    error.value = 'Failed to register. Please try again.'
+    // General catch for network/unexpected errors
+    console.error('Registration failed:', e)
   } finally {
     isRegistering.value = false
   }
