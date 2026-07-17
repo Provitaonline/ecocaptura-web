@@ -25,8 +25,7 @@
             </div>
 
             <div v-else>
-              <p class="has-text-centered">Logged in as {{ auth.email }}</p>
-              <p class="has-text-centered is-size-7">@{{ auth.username }}</p>
+              <p class="has-text-centered">Logged in as {{ auth.username }}</p>
               <b-button expanded type="is-danger" class="mt-3" @click="logout">Logout</b-button>
             </div>
           </div>
@@ -102,11 +101,9 @@ const logout = () => {
 }
 
 if (import.meta.client) {
-  window.handleCredentialResponse = (response) => {
-    // Decode JWT payload
-    const payload = JSON.parse(atob(response.credential.split('.')[1]))
-    // Call the new registration-aware login
-    auth.handleGoogleLogin(payload.email)
+  window.handleCredentialResponse = async (response) => {
+    // Pass the credential directly to the store
+    await auth.handleGoogleLogin(response.credential)
 
     if (!auth.isRegistrationPending) {
       closeDropdown()

@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { checkUser } from '~/scripts/data/checkUser'
+import { validateUser } from '~/scripts/data/validateUser'
 import { registerUser } from '~/scripts/data/registerUser'
 
 export const useAuthStore = defineStore('auth', {
@@ -11,52 +11,43 @@ export const useAuthStore = defineStore('auth', {
   }),
   
   actions: {
-    // Initial login handler
-    async handleGoogleLogin(email: string) {
-      const response = await checkUser(email)
+
+    async handleGoogleLogin(idToken: string) {
+      const response = await validateUser(idToken)
       
-      if (!response.exists) {
+      if (response.status === 404) {
         this.isRegistrationPending = true
-        this.email = email
-      } else {
-        this.username = response.username
-        this.completeLogin(email)
+        return
+      }
+      
+      const { token, user } = response
+      
+      if (token && user) {
+        localStorage.setItem('ecocaptura-jwt', token)
+        localStorage.setItem('ecocaptura-username', user.username)
+        this.username = user.username
+        this.isLoggedIn = true
       }
     },
 
-    // Complete registration for new users
     async completeRegistration(username: string) {
       await registerUser(this.email, username)
       this.username = username
       this.isRegistrationPending = false
-      this.completeLogin(this.email)
-    },
-
-    // Finalize local state
-    completeLogin(email: string) {
-      this.email = email
       this.isLoggedIn = true
-      localStorage.setItem('user_email', email)
-      localStorage.setItem('user_name', this.username)
     },
 
-    // Reset state
     logout() {
-      this.email = ''
       this.username = ''
       this.isLoggedIn = false
       this.isRegistrationPending = false
-      localStorage.removeItem('user_email')
-      localStorage.removeItem('user_name')
+      localStorage.removeItem('ecocaptura-jwt')
+      localStorage.removeItem('ecocaptura-username')
     },
 
-    // Restore session
     init() {
-      const savedEmail = localStorage.getItem('user_email')
-      const savedUsername = localStorage.getItem('user_name')
-      if (savedEmail) {
-        this.email = savedEmail
-        this.username = savedUsername || '' // Retrieve it
+      const token = localStorage.getItem('ecocaptura-jwt')
+      if (token) {
         this.isLoggedIn = true
       }
     }
