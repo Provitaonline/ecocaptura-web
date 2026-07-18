@@ -1,22 +1,33 @@
 <template>
-  <b-modal :model-value="auth.isRegistrationPending" :can-cancel="false">
-    <div class="card p-5">
-      <h3 class="title is-4">Welcome to EcoCaptura!</h3>
-      <p>Please choose a unique username to complete your account.</p>
-      
-      <b-field label="Username" :type="error ? 'is-danger' : ''" :message="error">
-        <b-input v-model="username" placeholder="e.g. ecocaptura_user"></b-input>
-      </b-field>
+  <b-modal 
+    :model-value="auth.isRegistrationPending" 
+    :can-cancel="['x', 'outside']"
+	has-modal-card
+    @close="handleCancel"
+  >
+    <div class="modal-card">
+      <header class="modal-card-head">
+        <p class="modal-card-title">Welcome to EcoCaptura!</p>
+        <button type="button" class="delete" @click="handleCancel" />
+      </header>
 
-      <b-button 
-        type="is-primary" 
-        class="mt-4" 
-        expanded 
-        :loading="isRegistering" 
-        @click="handleRegister"
-      >
-        Complete Registration
-      </b-button>
+      <section class="modal-card-body">
+        <p class="mb-4">Please choose a unique username to complete your account.</p>
+        
+        <b-field label="Username" :type="error ? 'is-danger' : ''" :message="error">
+          <b-input v-model="username" placeholder="e.g. ecocaptura_user"></b-input>
+        </b-field>
+      </section>
+
+      <footer class="modal-card-foot">
+        <b-button @click="handleCancel" label="Cancel" />
+        <b-button 
+          type="is-primary" 
+          :loading="isRegistering" 
+          @click="handleRegister"
+          label="Complete Registration"
+        />
+      </footer>
     </div>
   </b-modal>
 </template>
@@ -46,5 +57,10 @@ const handleRegister = async () => {
   } finally {
     isRegistering.value = false
   }
+}
+
+const handleCancel = () => {
+  auth.isRegistrationPending = false
+  auth.registrationError = ''
 }
 </script>
