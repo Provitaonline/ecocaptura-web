@@ -1,6 +1,7 @@
 export interface RegisterResponse {
   status: 201 | 409
-  token?: string
+  accessToken?: string
+  refreshToken?: string
   user?: {
     username: string
     PK: string
@@ -13,7 +14,8 @@ export const registerUser = async (idToken: string, username: string): Promise<R
   
   interface ApiResponse {
     message: string
-    token: string
+    accessToken: string
+    refreshToken: string
     user: {
       username: string
       PK: string
@@ -35,11 +37,11 @@ export const registerUser = async (idToken: string, username: string): Promise<R
     // Successful registration (201)
     return {
       status: 201,
-      token: response.token,
+      accessToken: response.accessToken,
+      refreshToken: response.refreshToken,
       user: response.user
     }
   } catch (error: any) {
-    // fetch throws for non-2xx responses
     if (error.status === 409) {
       return { 
         status: 409, 
@@ -47,7 +49,6 @@ export const registerUser = async (idToken: string, username: string): Promise<R
       }
     }
     
-    // Re-throw if it's an unexpected error (e.g., 500)
     throw error
   }
 }

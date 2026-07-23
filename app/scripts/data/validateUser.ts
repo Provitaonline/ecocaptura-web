@@ -1,9 +1,20 @@
-export const validateUser = async (idToken: string) => {
+export interface ValidateResponse {
+  status: number
+  accessToken?: string
+  refreshToken?: string
+  user?: {
+    username: string
+    PK: string
+  }
+}
+
+export const validateUser = async (idToken: string): Promise<ValidateResponse> => {
   const config = useRuntimeConfig()
   
   interface ApiResponse {
     message: string
-    token: string
+    accessToken: string
+    refreshToken: string
     user: {
       username: string
       PK: string
@@ -24,11 +35,11 @@ export const validateUser = async (idToken: string) => {
 
     return {
       status: 200,
-      token: response.token,
+      accessToken: response.accessToken,
+      refreshToken: response.refreshToken,
       user: response.user
     }
   } catch (error: any) {
-    // Nuxt/ofetch throws an error object for 4xx/5xx status codes
     if (error.status === 404) {
       return { status: 404 }
     }

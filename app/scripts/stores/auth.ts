@@ -14,7 +14,7 @@ export const useAuthStore = defineStore('auth', {
   
   actions: {
     async handleGoogleLogin(idToken: string) {
-      const response = await validateUser(idToken)
+      const response = await validateUser(idToken) as any
       
       if (response.status === 404) {
         this.idToken = idToken
@@ -22,29 +22,36 @@ export const useAuthStore = defineStore('auth', {
         return
       }
       
-      const { token, user } = response
-      if (token && user) {
-        this.persistSession(token, user.username)
+      const { accessToken, refreshToken, token, user } = response
+      // Fallback to 'token' if the backend hasn't been updated yet during your incremental rollout
+      const resolvedAccessToken = accessToken || token
+      
+      if (resolvedAccessToken && refreshToken && user) {
+        this.persistSession(resolvedAccessToken, refreshToken, user.username)
       }
     },
 
     async completeRegistration(idToken: string, username: string) {
       this.registrationError = ''
-      const response = await registerUser(idToken, username)
+      const response = await registerUser(idToken, username) as any
       
       if (response.status === 409) {
         this.registrationError = response.message || 'Username already taken'
         return
       }
 
-      if (response.status === 201 && response.token && response.user) {
-        this.persistSession(response.token, response.user.username)
+      const { accessToken, refreshToken, token, user } = response
+      const resolvedAccessToken = accessToken || token
+
+      if (response.status === 201 && resolvedAccessToken && refreshToken && user) {
+        this.persistSession(resolvedAccessToken, refreshToken, user.username)
         this.isRegistrationPending = false
       }
     },
 
-    persistSession(token: string, username: string) {
-      localStorage.setItem('ecocaptura-jwt', token)
+    persistSession(accessToken: string, refreshToken: string, username: string) {
+      localStorage.setItem('ecocaptura-access-token', accessToken)
+      localStorage.setItem('ecocaptura-refresh-token', refreshToken)
       localStorage.setItem('ecocaptura-username', username)
       this.username = username
       this.isLoggedIn = true
@@ -52,14 +59,16 @@ export const useAuthStore = defineStore('auth', {
 
     logout() {
       this.$reset() // Resets state to initial values
-      localStorage.removeItem('ecocaptura-jwt')
+      localStorage.removeItem('ecocaptura-access-token')
+      localStorage.removeItem('ecocaptura-refresh-token')
       localStorage.removeItem('ecocaptura-username')
     },
 
     init() {
-      const token = localStorage.getItem('ecocaptura-jwt')
+      // Session is active if we have a refresh token (or both)
+      const refreshToken = localStorage.getItem('ecocaptura-refresh-token')
       const username = localStorage.getItem('ecocaptura-username')
-      if (token && username) {
+      if (refreshToken && username) {
         this.username = username
         this.isLoggedIn = true
       }
