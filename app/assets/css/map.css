@@ -1,0 +1,379 @@
+/* Leaflet styling is nice for the map viewer area */
+/*!
+ * Portions of this file are derived from Leaflet (https://leafletjs.com)
+ * Copyright (c) 2010–2024, Vladimir Agafonkin
+ * BSD 2‑Clause License
+ */
+
+/* ────────────────────────────────────────────────
+   CONTROL POSITIONING
+   ──────────────────────────────────────────────── */
+
+.map-top {
+    position: absolute;
+    top: 0;
+    pointer-events: none;
+}
+
+.map-right {
+    position: absolute;
+    right: 0;
+    pointer-events: none;
+}
+
+.map-left {
+    position: absolute;
+    left: 0;
+    pointer-events: none;
+}
+
+.map-control {
+    float: left;
+    clear: both;
+    pointer-events: auto;
+}
+
+.map-right .map-control {
+    float: right;
+}
+
+.map-left .map-control {
+    float: left;
+}
+
+.map-top .map-control {
+    margin-top: 10px;
+}
+
+.map-right .map-control {
+    margin-right: 10px;
+}
+
+.map-left .map-control {
+    margin-left: 10px;
+}
+
+.map-bottom {
+    position: absolute;
+    bottom: 0;
+    pointer-events: none;
+}
+
+.map-bottom .map-control {
+    margin-bottom: 30px;
+}
+
+/* ────────────────────────────────────────────────
+   CONTROL BAR (North, Zoom, LookDown)
+   ──────────────────────────────────────────────── */
+
+.map-bar {
+    box-shadow: 0 1px 5px rgba(0,0,0,0.65);
+    border-radius: 4px;
+}
+
+.map-bar a,
+.map-bar a:hover {
+    background-color: #fff;
+    border-bottom: 1px solid #ccc;
+    width: 26px;
+    height: 26px;
+    line-height: 26px;
+    display: block;
+    text-align: center;
+    text-decoration: none;
+    color: black;
+}
+
+.map-bar a:hover {
+    background-color: #f4f4f4;
+}
+
+.map-bar a:first-child {
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+}
+
+.map-bar a:last-child {
+    border-bottom-left-radius: 4px;
+    border-bottom-right-radius: 4px;
+    border-bottom: none;
+}
+
+.map-control a.is-disabled {
+    opacity: 0.4;
+    pointer-events: none;
+    cursor: not-allowed;
+}
+
+
+/* ────────────────────────────────────────────────
+   ZOOM CONTROL
+   ──────────────────────────────────────────────── */
+
+.map-control-zoom-in,
+.map-control-zoom-out {
+    font: bold 18px 'Lucida Console', Monaco, monospace;
+    text-indent: 1px;
+}
+
+.map-control-zoom-out {
+    font-size: 20px;
+}
+
+
+/* ────────────────────────────────────────────────
+   LAYER CONTROL (full original Leaflet behavior)
+   ──────────────────────────────────────────────── */
+/* Container */
+.map-control-layers {
+    box-shadow: 0 1px 5px rgba(0,0,0,0.4);
+    background: #fff;
+    border-radius: 5px;
+}
+
+/* Toggle button */
+.map-control-layers-toggle {
+    background-image: url(../images/layers.png);
+    background-size: 18px 18px;
+    width: 26px;
+    height: 26px;
+    background-position: 50% 50%;
+    background-repeat: no-repeat;
+    display: block;
+}
+
+/* Retina */
+.map-retina .map-control-layers-toggle {
+    background-image: url(../images/layers-2x.png);
+    background-size: 26px 26px;
+}
+
+/* Touch */
+.map-touch .map-control-layers-toggle {
+    width: 44px;
+    height: 44px;
+}
+
+/* COLLAPSED: hide list */
+.map-control-layers .map-control-layers-list {
+    display: none;
+}
+
+/* EXPANDED: hide toggle, show list */
+.map-control-layers-expanded .map-control-layers-toggle {
+    display: none;
+}
+
+.map-control-layers-expanded .map-control-layers-list {
+    display: block;
+}
+
+/* Expanded container styling */
+.map-control-layers-expanded {
+    padding: 6px 10px 6px 6px;
+    color: #333;
+    background: #fff;
+}
+
+/* List */
+.map-control-layers-list {
+    max-height: 200px;
+    overflow-y: auto;
+    padding: 5px 0 5px 5px;
+}
+
+/* Inputs */
+.map-control-layers-selector {
+    margin-top: 2px;
+    position: relative;
+    top: 1px;
+}
+
+/* Labels */
+.map-control-layers-base label,
+.map-control-layers-overlays label {
+    display: block;
+    font-size: 13px;
+    line-height: 18px;
+    padding: 2px 0;
+}
+
+/* Separator */
+.map-control-layers-separator {
+    height: 0;
+    border-top: 1px solid #ddd;
+    margin: 5px -10px 5px -6px;
+}
+
+/* ────────────────────────────────────────────────
+   CUSTOM ICONS
+   ──────────────────────────────────────────────── */
+
+.map-look-down-icon {
+    transform: translateY(1px);
+    width: 24px;
+    height: 24px;
+}
+
+.map-help-icon {
+    padding: 2px;
+    width: 24px;
+    height: 24px;
+}
+
+.north-arrow-icon {
+    padding: 2px;
+    width: 24px;
+    height: 24px;
+}
+
+.reset-search-center {
+	padding: 4px 2px 2px;
+    width: 24px;
+    height: 24px;
+}
+
+/* ────────────────────────────────────────────────
+   MAP THUMBNAILS
+   ──────────────────────────────────────────────── */
+
+#map-thumbnails-layer {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: var(--z-map-thumbnails);
+}
+
+.map-thumb {
+    position: absolute;
+    width: 44px;
+    height: 44px;
+    border: 2px solid white;
+    border-radius: 2px;
+    overflow: hidden;
+    transform: translate(-50%, -100%);
+    pointer-events: auto;
+}
+
+.map-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.map-thumb-click {}
+
+
+/* ────────────────────────────────────────────────
+   LOADING OVERLAY
+   ──────────────────────────────────────────────── */
+
+.map-loading-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    z-index: 500;
+}
+
+.map-loading-spinner {
+    width: 36px;
+    height: 36px;
+    border: 4px solid rgba(0,0,0,0.2);
+    border-top-color: rgba(0,0,0,0.6);
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+
+/* ────────────────────────────────────────────────
+   POPUP SYSTEM (your custom popup)
+   ──────────────────────────────────────────────── */
+
+.map-popup-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: var(--z-controls);
+    pointer-events: none;
+}
+
+.map-popup {
+    position: absolute;
+    pointer-events: auto;
+    transform: translate(-50%, -120%);
+}
+
+.map-popup-inner {
+    position: relative;
+    display: inline-block;
+    background: white;
+    border-radius: 12px;
+    border: 1px solid white;
+    padding: 10px 10px;
+    max-width: 300px;
+    white-space: nowrap;
+}
+
+.map-popup-inner::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    bottom: -9px;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-top: 11px solid white;
+    z-index: 2;
+}
+
+.map-popup-content-wrapper {
+    padding: 1px;
+    text-align: center;
+    max-height: 200px;
+    overflow-y: auto;
+    border-radius: 12px;
+    background: transparent;
+}
+
+.map-popup-content {
+    margin: 4px 4px;
+    line-height: 1.4;
+    font-size: 12px;
+    max-width: 300px;
+    white-space: nowrap;
+}
+
+.map-popup-close-button {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+}
+
+.popup-track-link {
+    display: block;
+    margin-bottom: 4px;
+}
+
+.popup-track-link:hover {
+    text-decoration: underline;
+}
+
+/* ────────────────────────────────────────────────
+   CESIUM CREDIT OVERRIDE
+   ──────────────────────────────────────────────── */
+
+.cesium-credit-wrapper img[title="Cesium ion"] {
+    height: 20px;
+    width: auto;
+    vertical-align: -5px !important;
+}
