@@ -2,8 +2,11 @@
   <b-navbar class="is-light">
     <template #brand>
       <b-navbar-item tag="router-link" :to="{ path: '/' }">
-        <div style="width: 40px; height: 40px; background: #3273dc; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">
-          EC
+        <div class="is-flex is-align-items-center">
+          <Icon name="material-symbols:eco" style="font-size: 28px; color: #4db6ac;" />
+          <span class="ml-2 has-text-weight-bold" style="letter-spacing: 0.5px;">
+            {{ $t('nav.appname') }}
+          </span>
         </div>
       </b-navbar-item>
     </template>

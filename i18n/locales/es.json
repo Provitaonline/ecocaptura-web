@@ -1,9 +1,11 @@
 {
   "nav": {
+    "appname": "ecocaptura",
     "login": "Iniciar sesión",
     "logout": "Cerrar sesión",
     "welcome": "Conectado como {email}"
   },
+  "AppTitle": "ecocaptura",
   "auth": {
     "modal_title": "¡Bienvenido a EcoCaptura!",
     "modal_desc": "Elige un nombre de usuario único para completar tu cuenta.",

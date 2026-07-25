@@ -1,5 +1,6 @@
 {
   "nav": {
+    "appname": "ecocaptura",
     "login": "Login",
     "logout": "Logout",
     "welcome": "Logged in as {email}"
