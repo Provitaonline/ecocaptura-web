@@ -17,28 +17,11 @@ onMounted(async () => {
   if (!props.viewer) return
 
   try {
-    dataSource = await Cesium.GeoJsonDataSource.load(MAP_CONFIG.areaOfInterestBoundaryFile)
-
-    const entities = dataSource.entities.values
-    for (const entity of entities) {
-      if (entity.polygon && entity.polygon.hierarchy) {
-        const hierarchy = entity.polygon.hierarchy.getValue(Cesium.JulianDate.now())
-        if (hierarchy && hierarchy.positions) {
-          dataSource.entities.add({
-            polyline: {
-              positions: hierarchy.positions,
-              clampToGround: true,
-              material: Cesium.Color.ORANGE,
-              width: 2
-            }
-          })
-        }
-
-        // Disable original polygon visuals
-        entity.polygon.fill = new Cesium.ConstantProperty(false)
-        entity.polygon.outline = new Cesium.ConstantProperty(false)
-      }
-    }
+    dataSource = await Cesium.GeoJsonDataSource.load(MAP_CONFIG.areaOfInterestBoundaryFile, {
+      clampToGround: true,
+      stroke: Cesium.Color.ORANGE,
+      strokeWidth: 2
+    })
 
     props.viewer.dataSources.add(dataSource)
     dataSource.show = props.visible
