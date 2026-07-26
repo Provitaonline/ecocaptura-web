@@ -1,24 +1,34 @@
-import { UrlTemplateImageryProvider } from 'cesium'
+import { ImageryLayer, OpenStreetMapImageryProvider, Google2DImageryProvider } from 'cesium'
+import * as Cesium from 'cesium'
 
 export const imageryProviders = [
-  {
-	name: 'World Imagery',
+	{
+	name: 'Microsoft World Imagery',
 	providers: [
-	  () => new UrlTemplateImageryProvider({
-		url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-		maximumLevel: 19,
-		credit: 'Tiles © Esri — Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
-	  })
+		() => ImageryLayer.fromWorldImagery({} as Cesium.ImageryLayer.ConstructorOptions)
 	]
-  },
-  {
+	},
+	{
+		name: 'Google Maps Satellite',
+		providers: [
+		() => Cesium.ImageryLayer.fromProviderAsync(
+			Cesium.Google2DImageryProvider.fromIonAssetId({
+			assetId: '3830184', 
+			mapType: 'satellite'
+			}) as unknown as Promise<Cesium.ImageryProvider>
+		)
+		]
+	},
+	{
 	name: 'OpenStreetMap',
 	providers: [
-	  () => new UrlTemplateImageryProvider({
-		url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-		maximumLevel: 19,
-		credit: '©OpenStreetMap'
-	  })
+		() => new ImageryLayer(
+		new OpenStreetMapImageryProvider({
+			url: 'https://tile.openstreetmap.org/',
+			maximumLevel: 19,
+			credit: '© OpenStreetMap contributors'
+		})
+		)
 	]
-  }
+	}
 ]

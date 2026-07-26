@@ -60,7 +60,7 @@ function switchBasemap(index: number) {
   const basemap = imageryProviders[index]
   if (basemap && basemap.providers) {
     basemap.providers.forEach(providerFn => {
-      layers.addImageryProvider(providerFn())
+      layers.add(providerFn())
     })
   }
 }
