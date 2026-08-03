@@ -199,6 +199,12 @@
     padding: 2px 0;
 }
 
+.map-control-layers-base span,
+.map-control-layers-overlays span {
+  display: inline-block;
+  transform: translateY(-1px)
+}
+
 /* Separator */
 .map-control-layers-separator {
     height: 0;

@@ -10,6 +10,8 @@
     <a class="map-control-layers-toggle" href="#" @click="toggleDropdown"></a>
 
     <form class="map-control-layers-list" @submit.prevent>
+      
+      <!-- Basemaps -->
       <div id="basemap-layer-control" class="map-control-layers-base">
         <label v-for="(provider, index) in imageryProviders" :key="index">
           <input
@@ -23,40 +25,65 @@
           <span> &nbsp;{{ provider.name }}</span>
         </label>
       </div>
+
+      <!-- Separator -->
+      <div class="map-control-layers-separator"></div>
+
+      <!-- Overlays Section -->
+      <div id="overlay-layer-control" class="map-control-layers-overlays">
+        <label v-for="layer in overlayState" :key="layer.id">
+          <input
+            type="checkbox"
+            class="map-control-layers-selector"
+            v-model="layer.visible"
+            @change="handleOverlayToggle(layer)"
+          />
+          <span> &nbsp;{{ layer.name }}</span>
+        </label>
+      </div>
+
     </form>
   </div>
 </template>
 
 <style scoped>
-.map-control-layers-base span {
-  display: inline-block;
-  transform: translateY(-1px);
-}
+
+
 </style>
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 import * as Cesium from 'cesium'
 import { imageryProviders } from '@/scripts/map/basemaps'
+import { overlayLayers } from '@/scripts/map/overlays'
 
 const props = defineProps<{
   viewer: Cesium.Viewer
+}>()
+
+const emit = defineEmits<{
+  (e: 'update:overlay', id: string, visible: boolean): void
 }>()
 
 const isExpanded = ref(false)
 const selectedIndex = ref(0)
 let controlRef = ref<HTMLElement | null>(null)
 
+const overlayState = ref(
+  overlayLayers.map(layer => ({
+    ...layer,
+    visible: layer.defaultVisible
+  }))
+)
+
 function switchBasemap(index: number) {
   if (!props.viewer || props.viewer.isDestroyed()) return
   const layers = props.viewer.imageryLayers
 
-  // Remove all existing imagery layers
   while (layers.length > 0) {
     layers.remove(layers.get(0), true)
   }
 
-  // Add all providers for the selected basemap
   const basemap = imageryProviders[index]
   if (basemap && basemap.providers) {
     basemap.providers.forEach(providerFn => {
@@ -71,12 +98,16 @@ function handleRadioChange(index: number) {
   isExpanded.value = false
 }
 
+function handleOverlayToggle(layer: typeof overlayState.value[number]) {
+  if (!props.viewer || props.viewer.isDestroyed()) return
+  emit('update:overlay', layer.id, layer.visible)
+}
+
 function toggleDropdown(e: MouseEvent) {
   e.preventDefault()
   isExpanded.value = !isExpanded.value
 }
 
-// Close when clicking outside the component
 function handleClickOutside(e: MouseEvent) {
   if (controlRef.value && !controlRef.value.contains(e.target as Node)) {
     isExpanded.value = false

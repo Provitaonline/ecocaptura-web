@@ -2,18 +2,26 @@
   <div class="map-grid-map map-touch-wrapper">
     <div id="mapRoot" style="position: relative;">
       
-      <!-- Cesium canvas -->
-      <div id="cesiumContainer"></div>
+		<!-- Cesium canvas -->
+		<div id="cesiumContainer"></div>
 
-	  <AreaOfInterestBoundary v-if="viewer" :viewer="viewer" :visible="true" :autoZoom="false"/>
+		<AreaOfInterestBoundary 
+			v-if="viewer" 
+			:viewer="viewer" 
+			:visible="overlayStates['aoi'] ?? true" 
+			:autoZoom="false"
+		/>
 
-      <!-- Controls overlay (only renders once viewer is ready) -->
-      <div class="map-top map-right" v-if="viewer">
-		<NorthArrowControl :viewer="viewer" />
-        <ZoomControl :viewer="viewer" />
-		<LookDownControl :viewer="viewer" />
-		<LayerControl :viewer="viewer" />
-      </div>
+		<!-- Controls overlay (only renders once viewer is ready) -->
+		<div class="map-top map-right" v-if="viewer">
+			<NorthArrowControl :viewer="viewer" />
+			<ZoomControl :viewer="viewer" />
+			<LookDownControl :viewer="viewer" />
+			<LayerControl 
+				:viewer="viewer" 
+				@update:overlay="handleOverlayUpdate" 
+			/>
+		</div>
 
     </div>
   </div>
@@ -51,6 +59,8 @@ import LookDownControl from './mapControls/LookDownControl.vue'
 import AreaOfInterestBoundary from './AreaOfInterestBoundary.vue'
 import LayerControl from './mapControls/LayerControl.vue'
 import { MAP_CONFIG } from '@/scripts/config'
+import { reactive } from 'vue'
+import { overlayLayers } from '@/scripts/map/overlays'
 
 declare global {
   interface Window {
@@ -65,6 +75,14 @@ Ion.defaultAccessToken = config.public.cesiumIonToken
 
 // Make viewer a ref so the template can react when it initializes
 const viewer = ref<Viewer | null>(null)
+
+const overlayStates = reactive<Record<string, boolean>>(
+  Object.fromEntries(overlayLayers.map(layer => [layer.id, layer.defaultVisible]))
+)
+
+function handleOverlayUpdate(id: string, visible: boolean) {
+  overlayStates[id] = visible
+}
 
 onMounted(() => {
     viewer.value = new Viewer('cesiumContainer', {
