@@ -22,6 +22,16 @@
   "map": {
     "overlays": {
       "aoi": "Border"
-    }
+    },
+    "basemaps": {
+      "mwi": "Microsoft World Imagery",
+      "gms": "Google Maps Satellite",
+      "osm": "OpenStreetMap"
+    },
+    "zoom_in": "Zoom In",
+    "zoom_out": "Zoom Out",
+    "layer": "Basemaps & overlays",
+    "north_arrow": "North",
+    "look_down": "Look down"
   }
 }

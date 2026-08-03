@@ -1,6 +1,6 @@
 <template>
   <div class="map-bar map-control">
-    <a id="alignNorth" title="North" href="#" @click.prevent="resetNorth">
+    <a id="alignNorth" :title="$t('map.north_arrow')" :aria-label="$t('map.north_arrow')" href="#" @click.prevent="resetNorth">
       <svg
         ref="svgRef"
         viewBox="0 -6 100 110"

@@ -23,6 +23,16 @@
   "map": {
     "overlays": {
       "aoi": "Límites"
-    }
+    },
+    "basemaps": {
+      "mwi": "Capa de imágenes de Bing",
+      "gms": "Capa de satélite de Google",
+      "osm": "OpenStreetMap"
+    },
+    "zoom_in": "Acercar",
+    "zoom_out": "Alejar",
+    "north_arrow": "Norte",
+    "layer": "Mapas base y capas",
+    "look_down": "Mirar hacia abajo"
   }
 }

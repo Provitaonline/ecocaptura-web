@@ -1,6 +1,6 @@
 <template>
   <div class="map-bar map-control">
-    <a href="#" title="Look down" @click.prevent="lookDown">
+    <a href="#" :title="$t('map.look_down')" :aria-label="$t('map.look_down')" @click.prevent="lookDown">
       <Icon name="mdi:arrow-down-circle" class="map-look-down-icon" />
     </a>
   </div>

@@ -1,13 +1,7 @@
-export interface OverlayDefinition {
-  id: string
-  nameKey: string
-  defaultVisible: boolean
-}
-
-export const overlayLayers: OverlayDefinition[] = [
+export const overlayLayers = [
   {
     id: 'aoi',
 	nameKey: 'map.overlays.aoi',
     defaultVisible: false
-  },
+  }
 ]

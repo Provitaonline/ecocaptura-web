@@ -1,7 +1,7 @@
 <template>
   <div class="map-bar map-control">
-    <a class="map-control-zoom-in" href="#" title="Zoom in">+</a>
-    <a class="map-control-zoom-out" href="#" title="Zoom out">-</a>
+    <a class="map-control-zoom-in" href="#" :title="$t('map.zoom_in')" :aria-label="$t('map.zoom_in')">+</a>
+    <a class="map-control-zoom-out" href="#" :title="$t('map.zoom_out')" :aria-label="$t('map.zoom_out')">-</a>
   </div>
 </template>
 

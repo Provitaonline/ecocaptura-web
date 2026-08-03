@@ -2,7 +2,7 @@
   <div
     ref="controlRef"
     id="layerControl"
-    title="Basemaps & overlays"
+    :title="$t('map.layer')" :aria-label="$t('map.layer')"
     class="map-control map-control-layers"
     :class="{ 'map-control-layers-expanded': isExpanded }"
     aria-haspopup="true"
@@ -14,15 +14,15 @@
       <!-- Basemaps -->
       <div id="basemap-layer-control" class="map-control-layers-base">
         <label v-for="(provider, index) in imageryProviders" :key="index">
-          <input
-            type="radio"
-            class="basemap-layer map-control-layers-selector"
-            name="map-base-layers"
-            :value="index"
-            :checked="selectedIndex === index"
-            @change="handleRadioChange(index)"
-          />
-          <span> &nbsp;{{ provider.name }}</span>
+			<input
+			type="radio"
+			class="basemap-layer map-control-layers-selector"
+			name="map-base-layers"
+			:value="index"
+			:checked="selectedIndex === index"
+			@change="handleRadioChange(index)"
+			/>
+			<span> &nbsp;{{ $t(provider.nameKey) }}</span>
         </label>
       </div>
 
