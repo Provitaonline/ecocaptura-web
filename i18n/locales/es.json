@@ -33,6 +33,7 @@
     "zoom_out": "Alejar",
     "north_arrow": "Norte",
     "layer": "Mapas base y capas",
-    "look_down": "Mirar hacia abajo"
+    "look_down": "Mirar hacia abajo",
+    "reset_view": "Restablecer vista"
   }
 }

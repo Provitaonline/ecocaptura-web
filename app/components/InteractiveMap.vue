@@ -12,6 +12,7 @@
 			<NorthArrowControl :viewer="viewer" />
 			<ZoomControl :viewer="viewer" />
 			<LookDownControl :viewer="viewer" />
+			<ResetViewControl :viewer="viewer" />
 			<LayerControl :viewer="viewer" @update:overlay="handleOverlayUpdate" />
 		</div>
 
@@ -50,6 +51,7 @@ import NorthArrowControl from './mapControls/NorthArrowControl.vue'
 import LookDownControl from './mapControls/LookDownControl.vue'
 import AreaOfInterestBoundary from './AreaOfInterestBoundary.vue'
 import LayerControl from './mapControls/LayerControl.vue'
+import ResetViewControl from './mapControls/ResetViewControl.vue'
 import { MAP_CONFIG } from '@/scripts/config'
 import { reactive } from 'vue'
 import { overlayLayers } from '@/scripts/map/overlays'
