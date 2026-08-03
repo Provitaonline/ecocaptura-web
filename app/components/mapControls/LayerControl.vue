@@ -7,7 +7,10 @@
     :class="{ 'map-control-layers-expanded': isExpanded }"
     aria-haspopup="true"
   >
-    <a class="map-control-layers-toggle" href="#" @click="toggleDropdown"></a>
+	<a class="map-control-layers-toggle" href="#" @click="toggleDropdown">
+		<Icon name="mdi:layers" class="map-layer-icon" />
+	</a>
+	
 
     <form class="map-control-layers-list" @submit.prevent>
       
