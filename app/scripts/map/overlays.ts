@@ -1,13 +1,13 @@
 export interface OverlayDefinition {
   id: string
-  name: string
+  nameKey: string
   defaultVisible: boolean
 }
 
 export const overlayLayers: OverlayDefinition[] = [
   {
     id: 'aoi',
-    name: 'Area of Interest',
-    defaultVisible: false,
+	nameKey: 'map.overlays.aoi',
+    defaultVisible: false
   },
 ]

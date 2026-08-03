@@ -18,5 +18,10 @@
   "flags": {
     "en": "🇺🇸",
     "es": "🇻🇪"
+  },
+  "map": {
+    "overlays": {
+      "aoi": "Border"
+    }
   }
 }

@@ -38,7 +38,7 @@
             v-model="layer.visible"
             @change="handleOverlayToggle(layer)"
           />
-          <span> &nbsp;{{ layer.name }}</span>
+		  <span class="map-control-layers-label"> &nbsp;{{ $t(layer.nameKey) }}</span>
         </label>
       </div>
 

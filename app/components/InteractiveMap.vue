@@ -5,22 +5,14 @@
 		<!-- Cesium canvas -->
 		<div id="cesiumContainer"></div>
 
-		<AreaOfInterestBoundary 
-			v-if="viewer" 
-			:viewer="viewer" 
-			:visible="overlayStates['aoi'] ?? true" 
-			:autoZoom="false"
-		/>
+		<AreaOfInterestBoundary v-if="viewer" :viewer="viewer" :visible="overlayStates['aoi'] ?? true" :autoZoom="false" />
 
 		<!-- Controls overlay (only renders once viewer is ready) -->
 		<div class="map-top map-right" v-if="viewer">
 			<NorthArrowControl :viewer="viewer" />
 			<ZoomControl :viewer="viewer" />
 			<LookDownControl :viewer="viewer" />
-			<LayerControl 
-				:viewer="viewer" 
-				@update:overlay="handleOverlayUpdate" 
-			/>
+			<LayerControl :viewer="viewer" @update:overlay="handleOverlayUpdate" />
 		</div>
 
     </div>
