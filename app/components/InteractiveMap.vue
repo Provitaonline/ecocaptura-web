@@ -5,7 +5,7 @@
       <!-- Cesium canvas -->
       <div id="cesiumContainer"></div>
 
-	  <AreaOfInterestBoundary v-if="viewer" :viewer="viewer" :visible="true" />
+	  <AreaOfInterestBoundary v-if="viewer" :viewer="viewer" :visible="true" :autoZoom="false"/>
 
       <!-- Controls overlay (only renders once viewer is ready) -->
       <div class="map-top map-right" v-if="viewer">
@@ -43,13 +43,14 @@
 <script setup lang="ts">
 import '@/assets/css/map.css'
 import { onMounted, ref, onBeforeUnmount } from 'vue'
-import { Ion, Terrain, Viewer } from 'cesium'
+import { Ion, Terrain, Viewer, Cartesian3 } from 'cesium'
 import 'cesium/Build/Cesium/Widgets/widgets.css'
 import ZoomControl from './mapControls/ZoomControl.vue'
 import NorthArrowControl from './mapControls/NorthArrowControl.vue'
 import LookDownControl from './mapControls/LookDownControl.vue'
 import AreaOfInterestBoundary from './AreaOfInterestBoundary.vue'
 import LayerControl from './mapControls/LayerControl.vue'
+import { MAP_CONFIG } from '@/scripts/config'
 
 declare global {
   interface Window {
@@ -83,7 +84,17 @@ onMounted(() => {
         // @ts-ignore
         terrainExaggeration: 2
     });
-    (window as any).viewer = viewer.value
+
+	viewer.value.camera.setView({
+        destination: Cartesian3.fromDegrees(
+            MAP_CONFIG.defaultView.destination.longitude,
+            MAP_CONFIG.defaultView.destination.latitude,
+            MAP_CONFIG.defaultView.destination.height
+        ),
+        orientation: MAP_CONFIG.defaultView.orientation
+    })
+
+    ;(window as any).viewer = viewer.value
 	
 });
 
