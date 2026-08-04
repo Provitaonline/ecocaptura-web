@@ -7,26 +7,24 @@
     :class="{ 'map-control-layers-expanded': isExpanded }"
     aria-haspopup="true"
   >
-	<a class="map-control-layers-toggle" href="#" @click="toggleDropdown">
-		<Icon name="mdi:layers" class="map-layer-icon" />
-	</a>
-	
+    <a class="map-control-layers-toggle" href="#" @click="toggleDropdown">
+        <Icon name="mdi:layers" class="map-layer-icon" />
+    </a>
+    
 
-    <form class="map-control-layers-list" @submit.prevent>
+    <div class="map-control-layers-list">
       
       <!-- Basemaps -->
       <div id="basemap-layer-control" class="map-control-layers-base">
-        <label v-for="(provider, index) in imageryProviders" :key="index">
-			<input
-			type="radio"
-			class="basemap-layer map-control-layers-selector"
-			name="map-base-layers"
-			:value="index"
-			:checked="selectedIndex === index"
-			@change="handleRadioChange(index)"
-			/>
-			<span> &nbsp;{{ $t(provider.nameKey) }}</span>
-        </label>
+        <div
+          v-for="(provider, index) in imageryProviders" 
+          :key="index"
+          class="map-layer-item"
+          :class="{ 'is-active': selectedIndex === index }"
+          @click="handleBasemapClick(index)"
+        >
+          <span>{{ $t(provider.nameKey) }}</span>
+        </div>
       </div>
 
       <!-- Separator -->
@@ -34,24 +32,38 @@
 
       <!-- Overlays Section -->
       <div id="overlay-layer-control" class="map-control-layers-overlays">
-        <label v-for="layer in overlayState" :key="layer.id">
-          <input
-            type="checkbox"
-            class="map-control-layers-selector"
-            v-model="layer.visible"
-            @change="handleOverlayToggle(layer)"
-          />
-		  <span class="map-control-layers-label"> &nbsp;{{ $t(layer.nameKey) }}</span>
-        </label>
+        <div 
+          v-for="layer in overlayState" 
+          :key="layer.id"
+          class="map-layer-item"
+          :class="{ 'is-active': layer.visible }"
+          @click="handleOverlayClick(layer)"
+        >
+          <span class="map-control-layers-label">{{ $t(layer.nameKey) }}</span>
+        </div>
       </div>
 
-    </form>
+    </div>
   </div>
 </template>
 
 <style scoped>
+.map-layer-item {
+  cursor: pointer;
+  padding: 4px 8px;
+  user-select: none;
+  transition: color 0.15s ease;
+}
 
+/* Style for active / selected selections */
+.map-layer-item.is-active {
+  font-weight: bold;
+}
 
+/* Hover feedback */
+.map-layer-item:hover {
+  opacity: 0.8;
+}
 </style>
 
 <script setup lang="ts">
@@ -95,13 +107,14 @@ function switchBasemap(index: number) {
   }
 }
 
-function handleRadioChange(index: number) {
+function handleBasemapClick(index: number) {
   selectedIndex.value = index
   switchBasemap(index)
   isExpanded.value = false
 }
 
-function handleOverlayToggle(layer: typeof overlayState.value[number]) {
+function handleOverlayClick(layer: typeof overlayState.value[number]) {
+  layer.visible = !layer.visible
   if (!props.viewer || props.viewer.isDestroyed()) return
   emit('update:overlay', layer.id, layer.visible)
 }
