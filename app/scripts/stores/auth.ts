@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { validateUser } from '~/scripts/data/validateUser'
 import { registerUser } from '~/scripts/data/registerUser'
+import { tokenStorage } from '../utils/tokenStorage'
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
@@ -23,7 +24,6 @@ export const useAuthStore = defineStore('auth', {
       }
       
       const { accessToken, refreshToken, token, user } = response
-      // Fallback to 'token' if the backend hasn't been updated yet during your incremental rollout
       const resolvedAccessToken = accessToken || token
       
       if (resolvedAccessToken && refreshToken && user) {
@@ -50,27 +50,65 @@ export const useAuthStore = defineStore('auth', {
     },
 
     persistSession(accessToken: string, refreshToken: string, username: string) {
-      localStorage.setItem('ecocaptura-access-token', accessToken)
-      localStorage.setItem('ecocaptura-refresh-token', refreshToken)
-      localStorage.setItem('ecocaptura-username', username)
+      tokenStorage.setTokens(accessToken, refreshToken, username)
       this.username = username
       this.isLoggedIn = true
     },
 
-    logout() {
-      this.$reset() // Resets state to initial values
-      localStorage.removeItem('ecocaptura-access-token')
-      localStorage.removeItem('ecocaptura-refresh-token')
-      localStorage.removeItem('ecocaptura-username')
+    async refreshAccessToken(): Promise<string | null> {
+      const refreshToken = tokenStorage.getRefreshToken()
+      if (!refreshToken) return null
+
+      try {
+        const config = useRuntimeConfig()
+        const response = await fetch(`${config.public.apiBase}/refresh`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refreshToken })
+        })
+
+        if (!response.ok) throw new Error('Refresh token expired or invalid')
+
+        const data = await response.json()
+        const newAccessToken = data.accessToken || data.token
+        
+        if (newAccessToken) {
+          tokenStorage.setAccessToken(newAccessToken)
+          return newAccessToken
+        }
+      } catch (error) {
+        console.error('Session completely expired. Clearing tokens.', error)
+        this.logout()
+      }
+
+      return null
     },
 
-    init() {
-      // Session is active if we have a refresh token (or both)
-      const refreshToken = localStorage.getItem('ecocaptura-refresh-token')
-      const username = localStorage.getItem('ecocaptura-username')
-      if (refreshToken && username) {
+    logout() {
+      this.$reset()
+      tokenStorage.clear()
+      window.dispatchEvent(new CustomEvent('auth-expired'))
+    },
+
+    async init() {
+      const accessToken = tokenStorage.getAccessToken()
+      const refreshToken = tokenStorage.getRefreshToken()
+      const username = tokenStorage.getUsername()
+
+      if (accessToken && username) {
         this.username = username
         this.isLoggedIn = true
+      } else if (refreshToken && username) {
+        // Access token is missing or expired, but we have a refresh token
+        const newToken = await this.refreshAccessToken()
+        if (newToken) {
+          this.username = username
+          this.isLoggedIn = true
+        } else {
+          this.logout()
+        }
+      } else {
+        this.logout()
       }
     }
   }

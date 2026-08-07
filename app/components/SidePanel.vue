@@ -84,6 +84,7 @@ export default defineComponent({
     onMounted(async () => {
       window.addEventListener('auth-expired', () => {
         console.warn("User session has ended. Redirecting or showing login modal.")
+        window.location.href = '/'
       })
 
       loading.value = true
