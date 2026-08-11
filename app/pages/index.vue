@@ -12,7 +12,7 @@
         <p>This is your landing page. You can navigate to your map view once we integrate the globe.</p>
         
         <br />
-        <NuxtLink to="/map">Go to Map</NuxtLink>
+        <NuxtLink to="/captures">Go to Captures</NuxtLink>
       </div>
     </div>
   </div>
