@@ -89,7 +89,8 @@ import type { Capture } from '@/scripts/data/captures'
 
 export default defineComponent({
   name: 'SidePanel',
-  setup() {
+  emits: ['update:captures', 'select-capture'],
+  setup(props, { emit }) {
     const captureList = ref<Capture[]>([])
     const searchString = ref('')
     const loading = ref(false)
@@ -103,6 +104,7 @@ export default defineComponent({
       loading.value = true
       try {
         captureList.value = await getCaptures()
+        emit('update:captures', captureList.value)
       } catch (error) {
         console.error("Could not load capture list", error)
       } finally {
@@ -134,6 +136,7 @@ export default defineComponent({
     const toggleCard = (item: Capture) => {
       item.expanded = !item.expanded
       if (item.expanded && item.centroidCoordinates) {
+        emit('select-capture', item)
         const parts = item.centroidCoordinates.split(',').map(Number)
         const lat = parts[0]
         const lng = parts[1]

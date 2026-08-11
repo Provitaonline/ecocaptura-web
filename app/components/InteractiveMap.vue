@@ -44,7 +44,7 @@
 <script setup lang="ts">
 import '@/assets/css/map.css'
 import { onMounted, ref, onBeforeUnmount } from 'vue'
-import { Ion, Terrain, Viewer, Cartesian3 } from 'cesium'
+import { Ion, Terrain, Viewer, Cartesian3, Color, HeightReference, VerticalOrigin } from 'cesium'
 import 'cesium/Build/Cesium/Widgets/widgets.css'
 import ZoomControl from './mapControls/ZoomControl.vue'
 import NorthArrowControl from './mapControls/NorthArrowControl.vue'
@@ -66,6 +66,10 @@ const config = useRuntimeConfig()
 
 window.CESIUM_BASE_URL = '/cesium/'
 Ion.defaultAccessToken = config.public.cesiumIonToken
+
+const props = defineProps<{
+  captures?: any[]
+}>()
 
 // Make viewer a ref so the template can react when it initializes
 const viewer = ref<Viewer | null>(null)
@@ -115,4 +119,47 @@ onBeforeUnmount(() => {
     viewer.value.destroy()
   }
 })
+
+// Watch for capture list updates to add markers to the Cesium globe
+watch(() => props.captures, (newCaptures) => {
+	if (!viewer.value || !newCaptures) return
+
+	newCaptures.forEach(item => {
+		if (!item.centroidCoordinates) return
+
+		const parts = item.centroidCoordinates.split(',').map(Number)
+		const lat = parts[0]
+		const lng = parts[1]
+
+		if (lat !== undefined && lng !== undefined && !isNaN(lat) && !isNaN(lng)) {
+			viewer.value?.entities.add({
+			position: Cartesian3.fromDegrees(lng, lat),
+			billboard: {
+				image: '/images/blue_marker.png',
+				scale: 1.0,
+				heightReference: HeightReference.CLAMP_TO_GROUND,
+				verticalOrigin: VerticalOrigin.BOTTOM
+			},
+			properties: { captureId: item.captureId }
+			});
+		}
+	})
+}, { deep: true })
+
+// Expose camera fly-to function for parent calls
+function flyToCapture(centroidString: string) {
+	if (!viewer.value || !centroidString) return
+	const parts = centroidString.split(',').map(Number)
+	const lat = parts[0]
+	const lng = parts[1]
+
+	if (lat !== undefined && lng !== undefined && !isNaN(lat) && !isNaN(lng)) {
+	viewer.value?.camera.flyTo({
+		destination: Cartesian3.fromDegrees(lng, lat, 15000),
+		duration: 1.5
+	})
+	}
+}
+
+defineExpose({ flyToCapture })
 </script>

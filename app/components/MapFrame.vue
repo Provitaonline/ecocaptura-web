@@ -1,9 +1,16 @@
 <template>
   <div class="main-layout">
-    <SidePanel class="sidebar" />
+    <SidePanel 
+      class="sidebar" 
+      @update:captures="(list) => captureList = list"
+      @select-capture="handleSelectCapture"
+    />
 
     <div class="map-wrapper">
-      <InteractiveMap />
+      <InteractiveMap 
+        ref="mapRef"
+        :captures="captureList" 
+      />
     </div>
   </div>
 </template>
@@ -48,3 +55,17 @@
   }
 }
 </style>
+
+<script setup lang="ts">
+import { ref } from 'vue'
+import type { Capture } from '@/scripts/data/captures'
+
+const captureList = ref<Capture[]>([])
+const mapRef = ref<any>(null)
+
+function handleSelectCapture(item: Capture) {
+  if (item.expanded && item.centroidCoordinates && mapRef.value) {
+    mapRef.value.flyToCapture(item.centroidCoordinates)
+  }
+}
+</script>
