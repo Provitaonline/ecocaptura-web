@@ -44,7 +44,7 @@
 <script setup lang="ts">
 import '@/assets/css/map.css'
 import { onMounted, ref, onBeforeUnmount } from 'vue'
-import { Ion, Terrain, Viewer, Cartesian3, Color, HeightReference, VerticalOrigin } from 'cesium'
+import { Ion, Terrain, Viewer, Cartesian3, HeightReference, VerticalOrigin, Math, HeadingPitchRange, BoundingSphere } from 'cesium'
 import 'cesium/Build/Cesium/Widgets/widgets.css'
 import ZoomControl from './mapControls/ZoomControl.vue'
 import NorthArrowControl from './mapControls/NorthArrowControl.vue'
@@ -124,6 +124,8 @@ onBeforeUnmount(() => {
 watch(() => props.captures, (newCaptures) => {
 	if (!viewer.value || !newCaptures) return
 
+	viewer.value.entities.removeAll()
+
 	newCaptures.forEach(item => {
 		if (!item.centroidCoordinates) return
 
@@ -133,14 +135,15 @@ watch(() => props.captures, (newCaptures) => {
 
 		if (lat !== undefined && lng !== undefined && !isNaN(lat) && !isNaN(lng)) {
 			viewer.value?.entities.add({
-			position: Cartesian3.fromDegrees(lng, lat),
-			billboard: {
-				image: '/images/blue_marker.png',
-				scale: 1.0,
-				heightReference: HeightReference.CLAMP_TO_GROUND,
-				verticalOrigin: VerticalOrigin.BOTTOM
-			},
-			properties: { captureId: item.captureId }
+				id: item.captureId,
+				position: Cartesian3.fromDegrees(lng, lat),
+				billboard: {
+					image: '/images/blue_marker.png',
+					scale: 1.0,
+					heightReference: HeightReference.CLAMP_TO_GROUND,
+					verticalOrigin: VerticalOrigin.BOTTOM
+				},
+				properties: { captureId: item.captureId }
 			});
 		}
 	})
@@ -148,17 +151,20 @@ watch(() => props.captures, (newCaptures) => {
 
 // Expose camera fly-to function for parent calls
 function flyToCapture(centroidString: string) {
-	if (!viewer.value || !centroidString) return
-	const parts = centroidString.split(',').map(Number)
-	const lat = parts[0]
-	const lng = parts[1]
+  if (!viewer.value || !centroidString) return
+  const parts = centroidString.split(',').map(Number)
+  const lat = parts[0]
+  const lng = parts[1]
 
-	if (lat !== undefined && lng !== undefined && !isNaN(lat) && !isNaN(lng)) {
-	viewer.value?.camera.flyTo({
-		destination: Cartesian3.fromDegrees(lng, lat, 15000),
-		duration: 1.5
-	})
-	}
+  if (lat !== undefined && lng !== undefined && !isNaN(lat) && !isNaN(lng)) {
+    const targetPosition = Cartesian3.fromDegrees(lng, lat)
+    const offset = new HeadingPitchRange(0.0, Math.toRadians(-45), 15000)
+
+    viewer.value.camera.flyToBoundingSphere(
+      new BoundingSphere(targetPosition, 0),
+      { offset, duration: 1.5 }
+    )
+  }
 }
 
 defineExpose({ flyToCapture })
