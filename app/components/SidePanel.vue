@@ -30,33 +30,46 @@
         <div 
           v-for="item in filteredCaptures" 
           :key="item.captureId" 
-          class="panel-block is-block capture-card"
+          class="card mb-3"
         >
-          <!-- Card Header / Summary Row -->
-          <div @click="toggleCard(item)" class="is-flex justify-space-between align-center" style="cursor: pointer;">
-            <div>
-              <span class="has-text-weight-semibold">#{{ item.captureId.substring(0, 8) }}</span>
-              <p class="is-size-7 has-text-grey">{{ formatDate(item.timestamp || item.createdAt) }}</p>
+          <!-- Card Header -->
+          <div class="card-header" @click="toggleCard(item)" style="cursor: pointer;">
+            <div class="card-header-title is-flex is-justify-content-space-between align-items-start">
+              <div>
+                <!-- Line 1: Description in bold (falling back to ID if description is missing) -->
+                <p class="has-text-weight-semibold mb-1">
+                  {{ item.description || `#${item.captureId.substring(0, 8)}` }}
+                </p>
+                
+                <!-- Line 2: Date in yyyy-mm-dd hh:mm format -->
+                <p class="is-size-7 has-text-grey font-weight-normal mb-1">
+                  {{ formatDate(item.timestamp || item.createdAt) }}
+                </p>
+                
+                <!-- Line 3: Quality score represented as 3 stars (filled/empty) -->
+                <div v-if="item.qualityScore !== undefined" class="is-size-7 has-text-warning">
+                  <span v-for="star in 3" :key="star">
+                    <i :class="star <= item.qualityScore ? 'mdi mdi-star' : 'mdi mdi-star-outline'"></i>
+                  </span>
+                </div>
+              </div>
             </div>
-            <div>
-              <span v-if="item.qualityScore !== undefined" class="tag is-small is-info mr-2">
-                ★ {{ item.qualityScore }}
+            <a class="card-header-icon" aria-label="more options">
+              <span class="icon is-medium">
+                <i :class="item.expanded ? 'mdi mdi-chevron-up mdi-24px' : 'mdi mdi-chevron-down mdi-24px'"></i>
               </span>
-              <span class="icon">
-                <i :class="item.expanded ? 'mdi mdi-chevron-up' : 'mdi mdi-chevron-down'"></i>
-              </span>
-            </div>
+            </a>
           </div>
 
-          <!-- Expanded Content -->
-          <div v-if="item.expanded" class="mt-3 pt-3 border-top">
+          <!-- Card Content / Expanded Section -->
+          <div v-if="item.expanded" class="card-content">
             <p v-if="item.description" class="is-size-7 mb-2">
               <strong>Description:</strong> {{ item.description }}
             </p>
             <p v-if="item.qualityReason" class="is-size-7 mb-2 has-text-grey">
               <strong>Quality Note:</strong> {{ item.qualityReason }}
             </p>
-            <p v-if="item.centroidCoordinates" class="is-size-7 mb-2">
+            <p v-if="item.centroidCoordinates" class="is-size-7 mb-0">
               <strong>Coords:</strong> {{ item.centroidCoordinates }}
             </p>
           </div>
