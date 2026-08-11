@@ -2,12 +2,10 @@
   <div class="map-grid-map map-touch-wrapper">
     <div id="mapRoot" style="position: relative;">
       
-		<!-- Cesium canvas -->
 		<div id="cesiumContainer"></div>
 
 		<AreaOfInterestBoundary v-if="viewer" :viewer="viewer" :visible="overlayStates['aoi'] ?? true" :autoZoom="false" />
 
-		<!-- Controls overlay (only renders once viewer is ready) -->
 		<div class="map-top map-right" v-if="viewer">
 			<NorthArrowControl :viewer="viewer" />
 			<ZoomControl :viewer="viewer" />
@@ -23,7 +21,7 @@
 <style scoped>
 .map-grid-map {
     height: 100%;
-    min-height: 0; /* The magic link in the chain */
+    min-height: 0;
     position: relative;
 }
 
