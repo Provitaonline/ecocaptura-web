@@ -141,129 +141,115 @@
 }
 </style>
 
-<script lang="ts">
-import { defineComponent, ref, computed, onMounted } from 'vue'
+<script setup lang="ts">
+import { ref, computed, onMounted, watch } from 'vue'
 import { getCaptures } from '~/scripts/data/captures'
 import { getCaptureDetails } from '~/scripts/data/captureDetails'
 import type { CaptureDetailRecord } from '~/scripts/data/captureDetails'
 import type { Capture } from '@/scripts/data/captures'
 
-export default defineComponent({
-  name: 'SidePanel',
-  emits: ['update:filtered-captures', 'select-capture', 'toggle-capture-photos'],
-  setup(props, { emit }) {
-    const captureList = ref<Capture[]>([])
-    const searchString = ref('')
-    const loading = ref(false)
-    
-    // Store detailed capture records keyed by captureId
-    const captureDetailsMap = ref<Record<string, CaptureDetailRecord>>({})
-    const loadingDetailsMap = ref<Record<string, boolean>>({})
+const emit = defineEmits<{
+  (e: 'update:filtered-captures', list: Capture[]): void
+  (e: 'select-capture', item: Capture): void
+  (e: 'toggle-capture-photos', payload: { captureId: string; enabled: boolean; photos: any[] }): void
+}>()
 
-    const showPhotosMap = ref<Record<string, boolean>>({})
+const captureList = ref<Capture[]>([])
+const searchString = ref('')
+const loading = ref(false)
 
-    const filteredCaptures = computed(() => {
-      if (!captureList.value.length) return []
-      
-      const sorted = [...captureList.value].sort((a, b) => {
-        const timeA = new Date(a.timestamp || a.createdAt || 0).getTime()
-        const timeB = new Date(b.timestamp || b.createdAt || 0).getTime()
-        return timeB - timeA
-      })
+// Store detailed capture records keyed by captureId
+const captureDetailsMap = ref<Record<string, CaptureDetailRecord>>({})
+const loadingDetailsMap = ref<Record<string, boolean>>({})
 
-      if (!searchString.value || searchString.value.length < 2) {
-        return sorted
-      }
+const showPhotosMap = ref<Record<string, boolean>>({})
 
-      const query = searchString.value.toLowerCase()
-      return sorted.filter(item => {
-        const idMatch = item.captureId.toLowerCase().includes(query)
-        const descMatch = item.description?.toLowerCase().includes(query) || false
-        return idMatch || descMatch
-      })
-    })
+const filteredCaptures = computed(() => {
+  if (!captureList.value.length) return []
+  
+  const sorted = [...captureList.value].sort((a, b) => {
+    const timeA = new Date(a.timestamp || a.createdAt || 0).getTime()
+    const timeB = new Date(b.timestamp || b.createdAt || 0).getTime()
+    return timeB - timeA
+  })
 
-    // Watch filteredCaptures to keep the parent map in sync automatically
-    watch(filteredCaptures, (newList) => {
-      emit('update:filtered-captures', newList)
-    }, { immediate: true })
+  if (!searchString.value || searchString.value.length < 2) {
+    return sorted
+  }
 
-    onMounted(async () => {
-      window.addEventListener('auth-expired', () => {
-        console.warn("User session has ended. Redirecting or showing login modal.")
-        window.location.href = '/'
-      })
+  const query = searchString.value.toLowerCase()
+  return sorted.filter(item => {
+    const idMatch = item.captureId.toLowerCase().includes(query)
+    const descMatch = item.description?.toLowerCase().includes(query) || false
+    return idMatch || descMatch
+  })
+})
 
-      loading.value = true
-      try {
-        captureList.value = await getCaptures()
-        // initial emit happens via the immediate watcher above
-      } catch (error) {
-        console.error("Could not load capture list", error)
-      } finally {
-        loading.value = false
-      }
-    })
+// Watch filteredCaptures to keep the parent map in sync automatically
+watch(filteredCaptures, (newList) => {
+  emit('update:filtered-captures', newList)
+}, { immediate: true })
 
-    const toggleCard = async (item: Capture) => {
-      item.expanded = !item.expanded
-      
-      if (item.expanded) {
-        // Map navigation trigger
-        if (item.centroidCoordinates) {
-          emit('select-capture', item)
-          const parts = item.centroidCoordinates.split(',').map(Number)
-          const lat = parts[0]
-          const lng = parts[1]
+onMounted(async () => {
+  window.addEventListener('auth-expired', () => {
+    console.warn("User session has ended. Redirecting or showing login modal.")
+    window.location.href = '/'
+  })
 
-          if (lat !== undefined && lng !== undefined && !isNaN(lat) && !isNaN(lng)) {
-            console.log(`Centering map at: Lat ${lat}, Lng ${lng}`)
-          }
-        }
-
-        // Fetch detailed data (including photos) incrementally if not already cached
-        if (!captureDetailsMap.value[item.captureId] && !loadingDetailsMap.value[item.captureId]) {
-          try {
-            loadingDetailsMap.value[item.captureId] = true
-            const details = await getCaptureDetails(item.captureId)
-            captureDetailsMap.value[item.captureId] = details
-          } catch (error) {
-            console.error(`Failed to load details for capture ${item.captureId}:`, error)
-          } finally {
-            loadingDetailsMap.value[item.captureId] = false
-          }
-        }
-      }
-    }
-
-    const formatDate = (dateString?: string): string => {
-      if (!dateString) return 'Unknown date'
-      return new Date(dateString).toLocaleString()
-    }
-
-    const togglePhotosOnMap = (item: Capture) => {
-      const isEnabled = !!showPhotosMap.value[item.captureId]
-      const details = captureDetailsMap.value[item.captureId]
-      
-      emit('toggle-capture-photos', {
-        captureId: item.captureId,
-        enabled: isEnabled,
-        photos: details?.photos || []
-      })
-    }
-
-    return {
-      captureList,
-      searchString,
-      loading,
-      filteredCaptures,
-      captureDetailsMap,
-      loadingDetailsMap,
-      showPhotosMap,
-      togglePhotosOnMap,
-      toggleCard,
-      formatDate
-    }
+  loading.value = true
+  try {
+    captureList.value = await getCaptures()
+  } catch (error) {
+    console.error("Could not load capture list", error)
+  } finally {
+    loading.value = false
   }
 })
+
+const toggleCard = async (item: Capture) => {
+  item.expanded = !item.expanded
+  
+  if (item.expanded) {
+    // Map navigation trigger
+    if (item.centroidCoordinates) {
+      emit('select-capture', item)
+      const parts = item.centroidCoordinates.split(',').map(Number)
+      const lat = parts[0]
+      const lng = parts[1]
+
+      if (lat !== undefined && lng !== undefined && !isNaN(lat) && !isNaN(lng)) {
+        console.log(`Centering map at: Lat ${lat}, Lng ${lng}`)
+      }
+    }
+
+    // Fetch detailed data (including photos) incrementally if not already cached
+    if (!captureDetailsMap.value[item.captureId] && !loadingDetailsMap.value[item.captureId]) {
+      try {
+        loadingDetailsMap.value[item.captureId] = true
+        const details = await getCaptureDetails(item.captureId)
+        captureDetailsMap.value[item.captureId] = details
+      } catch (error) {
+        console.error(`Failed to load details for capture ${item.captureId}:`, error)
+      } finally {
+        loadingDetailsMap.value[item.captureId] = false
+      }
+    }
+  }
+}
+
+const formatDate = (dateString?: string): string => {
+  if (!dateString) return 'Unknown date'
+  return new Date(dateString).toLocaleString()
+}
+
+const togglePhotosOnMap = (item: Capture) => {
+  const isEnabled = !!showPhotosMap.value[item.captureId]
+  const details = captureDetailsMap.value[item.captureId]
+  
+  emit('toggle-capture-photos', {
+    captureId: item.captureId,
+    enabled: isEnabled,
+    photos: details?.photos || []
+  })
+}
 </script>
