@@ -63,11 +63,19 @@
 
           <!-- Card Content / Expanded Section -->
           <div v-if="item.expanded" class="card-content">
+            <!-- Add to Map Switch -->
+            <div class="mb-3">
+              <b-switch 
+                v-model="showPhotosMap[item.captureId]" 
+                size="is-small"
+                @input="togglePhotosOnMap(item)"
+              >
+                Add to map
+              </b-switch>
+            </div>
+
             <p v-if="item.qualityReason" class="is-size-7 mb-2 has-text-grey">
               <strong>Quality Note:</strong> {{ item.qualityReason }}
-            </p>
-            <p v-if="item.centroidCoordinates" class="is-size-7 mb-3">
-              <strong>Coords:</strong> {{ item.centroidCoordinates }}
             </p>
 
             <!-- Loading state -->
@@ -76,7 +84,7 @@
               <span class="is-size-7 ml-2">Loading photos...</span>
             </div>
 
-            <!-- Thumbnails Grid using Bulma columns (is-multiline with 4 columns = 3 items per row, or 3-column setup) -->
+            <!-- Thumbnails Grid using Bulma columns -->
             <div v-else-if="captureDetailsMap[item.captureId]?.photos?.length" class="columns is-multiline is-mobile is-variable is-1 mt-1">
               <div 
                 v-for="photo in captureDetailsMap[item.captureId]?.photos" 
@@ -100,7 +108,7 @@
             <p v-else-if="captureDetailsMap[item.captureId]" class="is-size-7 has-text-grey">
               No photos attached to this capture.
             </p>
-          </div>
+          </div> 
         </div>
       </template>
       <div v-else class="panel-block has-text-grey is-size-7">
@@ -142,7 +150,7 @@ import type { Capture } from '@/scripts/data/captures'
 
 export default defineComponent({
   name: 'SidePanel',
-  emits: ['update:filtered-captures', 'select-capture'],
+  emits: ['update:filtered-captures', 'select-capture', 'toggle-capture-photos'],
   setup(props, { emit }) {
     const captureList = ref<Capture[]>([])
     const searchString = ref('')
@@ -151,6 +159,8 @@ export default defineComponent({
     // Store detailed capture records keyed by captureId
     const captureDetailsMap = ref<Record<string, CaptureDetailRecord>>({})
     const loadingDetailsMap = ref<Record<string, boolean>>({})
+
+    const showPhotosMap = ref<Record<string, boolean>>({})
 
     const filteredCaptures = computed(() => {
       if (!captureList.value.length) return []
@@ -231,6 +241,17 @@ export default defineComponent({
       return new Date(dateString).toLocaleString()
     }
 
+    const togglePhotosOnMap = (item: Capture) => {
+      const isEnabled = !!showPhotosMap.value[item.captureId]
+      const details = captureDetailsMap.value[item.captureId]
+      
+      emit('toggle-capture-photos', {
+        captureId: item.captureId,
+        enabled: isEnabled,
+        photos: details?.photos || []
+      })
+    }
+
     return {
       captureList,
       searchString,
@@ -238,6 +259,8 @@ export default defineComponent({
       filteredCaptures,
       captureDetailsMap,
       loadingDetailsMap,
+      showPhotosMap,
+      togglePhotosOnMap,
       toggleCard,
       formatDate
     }
