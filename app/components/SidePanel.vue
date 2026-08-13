@@ -142,7 +142,7 @@ import type { Capture } from '@/scripts/data/captures'
 
 export default defineComponent({
   name: 'SidePanel',
-  emits: ['update:captures', 'select-capture'],
+  emits: ['update:filtered-captures', 'select-capture'],
   setup(props, { emit }) {
     const captureList = ref<Capture[]>([])
     const searchString = ref('')
@@ -151,23 +151,6 @@ export default defineComponent({
     // Store detailed capture records keyed by captureId
     const captureDetailsMap = ref<Record<string, CaptureDetailRecord>>({})
     const loadingDetailsMap = ref<Record<string, boolean>>({})
-
-    onMounted(async () => {
-      window.addEventListener('auth-expired', () => {
-        console.warn("User session has ended. Redirecting or showing login modal.")
-        window.location.href = '/'
-      })
-
-      loading.value = true
-      try {
-        captureList.value = await getCaptures()
-        emit('update:captures', captureList.value)
-      } catch (error) {
-        console.error("Could not load capture list", error)
-      } finally {
-        loading.value = false
-      }
-    })
 
     const filteredCaptures = computed(() => {
       if (!captureList.value.length) return []
@@ -188,6 +171,28 @@ export default defineComponent({
         const descMatch = item.description?.toLowerCase().includes(query) || false
         return idMatch || descMatch
       })
+    })
+
+    // Watch filteredCaptures to keep the parent map in sync automatically
+    watch(filteredCaptures, (newList) => {
+      emit('update:filtered-captures', newList)
+    }, { immediate: true })
+
+    onMounted(async () => {
+      window.addEventListener('auth-expired', () => {
+        console.warn("User session has ended. Redirecting or showing login modal.")
+        window.location.href = '/'
+      })
+
+      loading.value = true
+      try {
+        captureList.value = await getCaptures()
+        // initial emit happens via the immediate watcher above
+      } catch (error) {
+        console.error("Could not load capture list", error)
+      } finally {
+        loading.value = false
+      }
     })
 
     const toggleCard = async (item: Capture) => {

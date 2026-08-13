@@ -2,14 +2,14 @@
   <div class="main-layout">
     <SidePanel 
       class="sidebar" 
-      @update:captures="(list) => captureList = list"
+      @update:filtered-captures="(list: Capture[]) => filteredCaptures = list"
       @select-capture="handleSelectCapture"
     />
 
     <div class="map-wrapper">
       <InteractiveMap 
         ref="mapRef"
-        :captures="captureList" 
+        :captures="filteredCaptures" 
       />
     </div>
   </div>
@@ -58,9 +58,11 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import SidePanel from './SidePanel.vue'
+import InteractiveMap from './InteractiveMap.vue'
 import type { Capture } from '@/scripts/data/captures'
 
-const captureList = ref<Capture[]>([])
+const filteredCaptures = ref<Capture[]>([])
 const mapRef = ref<any>(null)
 
 function handleSelectCapture(item: Capture) {
