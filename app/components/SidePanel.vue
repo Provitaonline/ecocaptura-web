@@ -36,10 +36,10 @@
           <div class="card-header" @click="toggleCard(item)" style="cursor: pointer;">
             <div class="card-header-title is-flex is-justify-content-space-between align-items-start">
               <div>
-                <!-- Line 1: Description in bold (falling back to ID if description is missing) -->
-                <p class="has-text-weight-semibold mb-1">
-                  {{ item.description || `#${item.captureId.substring(0, 8)}` }}
-                </p>
+              <!-- Line 1: Description in bold with 2-line clamp and ellipsis -->
+              <p class="has-text-weight-semibold mb-1 clamped-description">
+                {{ item.description || `#${item.captureId.substring(0, 8)}` }}
+              </p>
                 
                 <!-- Line 2: Date in yyyy-mm-dd hh:mm format -->
                 <p class="is-size-7 has-text-grey font-weight-normal mb-1">
@@ -63,14 +63,42 @@
 
           <!-- Card Content / Expanded Section -->
           <div v-if="item.expanded" class="card-content">
-            <p v-if="item.description" class="is-size-7 mb-2">
-              <strong>Description:</strong> {{ item.description }}
-            </p>
             <p v-if="item.qualityReason" class="is-size-7 mb-2 has-text-grey">
               <strong>Quality Note:</strong> {{ item.qualityReason }}
             </p>
-            <p v-if="item.centroidCoordinates" class="is-size-7 mb-0">
+            <p v-if="item.centroidCoordinates" class="is-size-7 mb-3">
               <strong>Coords:</strong> {{ item.centroidCoordinates }}
+            </p>
+
+            <!-- Loading state -->
+            <div v-if="loadingDetailsMap[item.captureId]" class="has-text-centered py-3">
+              <span class="icon is-small is-loading"></span>
+              <span class="is-size-7 ml-2">Loading photos...</span>
+            </div>
+
+            <!-- Thumbnails Grid using Bulma columns (is-multiline with 4 columns = 3 items per row, or 3-column setup) -->
+            <div v-else-if="captureDetailsMap[item.captureId]?.photos?.length" class="columns is-multiline is-mobile is-variable is-1 mt-1">
+              <div 
+                v-for="photo in captureDetailsMap[item.captureId]?.photos" 
+                :key="photo.photoId" 
+                class="column is-one-third"
+              >
+                <figure class="image is-square">
+                  <img 
+                    :src="photo.thumbnailUrl || '/images/placeholder.png'" 
+                    :alt="photo.description || 'Capture photo thumbnail'"
+                    style="object-fit: cover; border-radius: 4px;"
+                  />
+                </figure>
+              </div>
+            </div>
+
+            <p v-if="item.description" class="is-size-7 mb-2">
+              {{ item.description }}
+            </p>
+
+            <p v-else-if="captureDetailsMap[item.captureId]" class="is-size-7 has-text-grey">
+              No photos attached to this capture.
             </p>
           </div>
         </div>
@@ -82,9 +110,34 @@
   </div>
 </template>
 
+<style scoped>
+.capture-sidebar {
+  height: 100%;
+  overflow-y: auto;
+}
+.capture-list-container {
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
+}
+.border-top {
+  border-top: 1px solid #dbdbdb;
+}
+.clamped-description {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: break-word;
+}
+</style>
+
 <script lang="ts">
 import { defineComponent, ref, computed, onMounted } from 'vue'
 import { getCaptures } from '~/scripts/data/captures'
+import { getCaptureDetails } from '~/scripts/data/captureDetails'
+import type { CaptureDetailRecord } from '~/scripts/data/captureDetails'
 import type { Capture } from '@/scripts/data/captures'
 
 export default defineComponent({
@@ -94,6 +147,10 @@ export default defineComponent({
     const captureList = ref<Capture[]>([])
     const searchString = ref('')
     const loading = ref(false)
+    
+    // Store detailed capture records keyed by captureId
+    const captureDetailsMap = ref<Record<string, CaptureDetailRecord>>({})
+    const loadingDetailsMap = ref<Record<string, boolean>>({})
 
     onMounted(async () => {
       window.addEventListener('auth-expired', () => {
@@ -133,16 +190,33 @@ export default defineComponent({
       })
     })
 
-    const toggleCard = (item: Capture) => {
+    const toggleCard = async (item: Capture) => {
       item.expanded = !item.expanded
-      if (item.expanded && item.centroidCoordinates) {
-        emit('select-capture', item)
-        const parts = item.centroidCoordinates.split(',').map(Number)
-        const lat = parts[0]
-        const lng = parts[1]
+      
+      if (item.expanded) {
+        // Map navigation trigger
+        if (item.centroidCoordinates) {
+          emit('select-capture', item)
+          const parts = item.centroidCoordinates.split(',').map(Number)
+          const lat = parts[0]
+          const lng = parts[1]
 
-        if (lat !== undefined && lng !== undefined && !isNaN(lat) && !isNaN(lng)) {
-          console.log(`Centering map at: Lat ${lat}, Lng ${lng}`)
+          if (lat !== undefined && lng !== undefined && !isNaN(lat) && !isNaN(lng)) {
+            console.log(`Centering map at: Lat ${lat}, Lng ${lng}`)
+          }
+        }
+
+        // Fetch detailed data (including photos) incrementally if not already cached
+        if (!captureDetailsMap.value[item.captureId] && !loadingDetailsMap.value[item.captureId]) {
+          try {
+            loadingDetailsMap.value[item.captureId] = true
+            const details = await getCaptureDetails(item.captureId)
+            captureDetailsMap.value[item.captureId] = details
+          } catch (error) {
+            console.error(`Failed to load details for capture ${item.captureId}:`, error)
+          } finally {
+            loadingDetailsMap.value[item.captureId] = false
+          }
         }
       }
     }
@@ -157,23 +231,11 @@ export default defineComponent({
       searchString,
       loading,
       filteredCaptures,
+      captureDetailsMap,
+      loadingDetailsMap,
       toggleCard,
       formatDate
     }
   }
 })
 </script>
-
-<style scoped>
-.capture-sidebar {
-  height: 100%;
-  overflow-y: auto;
-}
-.capture-list-container {
-  max-height: calc(100vh - 120px);
-  overflow-y: auto;
-}
-.border-top {
-  border-top: 1px solid #dbdbdb;
-}
-</style>
