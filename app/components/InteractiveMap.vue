@@ -165,5 +165,60 @@ function flyToCapture(centroidString: string) {
   }
 }
 
-defineExpose({ flyToCapture })
+// Handle toggling photo markers on/off for a given capture
+// Track active photo entity IDs per capture so we can reliably remove them
+
+function handlePhotoEntities(payload: { captureId: string; enabled: boolean; photos: any[] }) {
+	if (!viewer.value) return
+
+	const { captureId, enabled, photos } = payload
+	const entityCollection = viewer.value.entities
+
+	// 1. Always remove any existing photo entities associated with this capture ID first
+	const idsToRemove: string[] = []
+	for (const entity of entityCollection.values) {
+		if (entity?.id && typeof entity.id === 'string' && entity.id.startsWith(`photo_${captureId}_`)) {
+			idsToRemove.push(entity.id)
+		}
+	}
+
+	idsToRemove.forEach(id => {
+	entityCollection.removeById(id)
+	})
+
+	// 2. GUARD: If the switch is turned off, STOP here. Do not add anything back!
+	if (!enabled) return
+
+	// 3. Only add them if enabled is explicitly true and we have photos
+	if (photos && photos.length > 0) {
+		photos.forEach(photo => {
+			let lat: number | undefined
+			let lng: number | undefined
+
+			if (photo.gpsCoordinates) {
+				const parts = photo.gpsCoordinates.split(',').map(Number)
+				lat = parts[0]
+				lng = parts[1]
+			}
+
+			if (lat !== undefined && lng !== undefined && !isNaN(lat) && !isNaN(lng)) {
+				console.log('add', `photo_${captureId}_${photo.photoId}`)
+				entityCollection.add({
+					id: `photo_${captureId}_${photo.photoId}`,
+					position: Cartesian3.fromDegrees(lng, lat),
+					billboard: {
+						image: MAP_CONFIG.icons.photoMarker,
+						scale: 1.0,
+						heightReference: HeightReference.CLAMP_TO_GROUND,
+						verticalOrigin: VerticalOrigin.BOTTOM,
+						pixelOffset: new Cartesian3(0, -10, 0)
+					},
+					properties: { photoId: photo.photoId, captureId }
+				})
+			}
+		})
+	}
+}
+
+defineExpose({ flyToCapture, handlePhotoEntities })
 </script>

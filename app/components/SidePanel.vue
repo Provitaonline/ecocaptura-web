@@ -68,7 +68,7 @@
               <b-switch 
                 v-model="showPhotosMap[item.captureId]" 
                 size="is-small"
-                @input="togglePhotosOnMap(item)"
+                @change="handlePhotoToggle(item.captureId)"
               >
                 Add to map
               </b-switch>
@@ -242,12 +242,14 @@ const formatDate = (dateString?: string): string => {
   return new Date(dateString).toLocaleString()
 }
 
-const togglePhotosOnMap = (item: Capture) => {
-  const isEnabled = !!showPhotosMap.value[item.captureId]
-  const details = captureDetailsMap.value[item.captureId]
-  
+const handlePhotoToggle = async (captureId: string) => {
+  // Wait for Vue to finish updating the v-model state on the next tick
+
+  const isEnabled = Boolean(showPhotosMap.value[captureId])
+  const details = captureDetailsMap.value[captureId]
+
   emit('toggle-capture-photos', {
-    captureId: item.captureId,
+    captureId,
     enabled: isEnabled,
     photos: details?.photos || []
   })

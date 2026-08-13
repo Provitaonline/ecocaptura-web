@@ -4,6 +4,7 @@
       class="sidebar" 
       @update:filtered-captures="(list: Capture[]) => filteredCaptures = list"
       @select-capture="handleSelectCapture"
+      @toggle-capture-photos="handleToggleCapturePhotos"
     />
 
     <div class="map-wrapper">
@@ -68,6 +69,12 @@ const mapRef = ref<any>(null)
 function handleSelectCapture(item: Capture) {
   if (item.expanded && item.centroidCoordinates && mapRef.value) {
     mapRef.value.flyToCapture(item.centroidCoordinates)
+  }
+}
+
+function handleToggleCapturePhotos(payload: { captureId: string; enabled: boolean; photos: any[] }) {
+  if (mapRef.value) {
+    mapRef.value.handlePhotoEntities(payload)
   }
 }
 </script>
