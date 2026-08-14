@@ -19,7 +19,8 @@ export default defineNuxtConfig({
         '@vue/devtools-core',
         '@vue/devtools-kit',
         'buefy',
-        'cesium'
+        'cesium',
+        'panzoom',
       ]
     }
   },
