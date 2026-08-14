@@ -215,6 +215,7 @@ onMounted(async () => {
 })
 
 const toggleCard = async (item: Capture) => {
+  const wasExpanded = item.expanded
   item.expanded = !item.expanded
   
   if (item.expanded) {
@@ -242,6 +243,16 @@ const toggleCard = async (item: Capture) => {
         loadingDetailsMap.value[item.captureId] = false
       }
     }
+  } else if (wasExpanded) {
+    // Card is being closed/collapsed: turn off switch and remove markers from map
+    if (showPhotosMap.value[item.captureId]) {
+      showPhotosMap.value[item.captureId] = false
+      emit('toggle-capture-photos', {
+        captureId: item.captureId,
+        enabled: false,
+        photos: []
+      })
+    }
   }
 }
 
@@ -251,8 +262,6 @@ const formatDate = (dateString?: string): string => {
 }
 
 const handlePhotoToggle = async (captureId: string) => {
-  // Wait for Vue to finish updating the v-model state on the next tick
-
   const isEnabled = Boolean(showPhotosMap.value[captureId])
   const details = captureDetailsMap.value[captureId]
 
@@ -264,14 +273,13 @@ const handlePhotoToggle = async (captureId: string) => {
 }
 
 const handleThumbnailError = async (captureId: string, photo: any, event: Event) => {
-  // Prevent infinite loops if the fallback / retry also fails
   const imgElement = event.target as HTMLImageElement
   if (imgElement.dataset.retried) return
   imgElement.dataset.retried = 'true'
 
   try {
     const presignedUrls = await getDownloadPresignedUrls(captureId, [
-      { id: photo.photoId, type: 'THUMB' } // or 'PHOTO' depending on what type your thumbnail uses
+      { id: photo.photoId, type: 'THUMB' }
     ])
     const signedItem = presignedUrls.find(item => item.id === photo.photoId)
     if (signedItem?.downloadUrl) {

@@ -61,7 +61,10 @@ import {
   Primitive,
   PerInstanceColorAppearance,
   ColorGeometryInstanceAttribute,
-  Color
+  Color,
+  ScreenSpaceEventHandler,
+  ScreenSpaceEventType,
+  defined
 } from 'cesium'
 import 'cesium/Build/Cesium/Widgets/widgets.css'
 import ZoomControl from './mapControls/ZoomControl.vue'
@@ -89,8 +92,13 @@ const props = defineProps<{
   captures?: any[]
 }>()
 
+const emit = defineEmits<{
+  (e: 'open-lightbox', payload: { captureId: string; id: string }): void
+}>()
+
 // Make viewer a ref so the template can react when it initializes
 const viewer = ref<Viewer | null>(null)
+let handler: ScreenSpaceEventHandler | null = null
 
 const overlayStates = reactive<Record<string, boolean>>(
   Object.fromEntries(overlayLayers.map(layer => [layer.id, layer.defaultVisible]))
@@ -119,7 +127,7 @@ onMounted(() => {
         terrainExaggeration: 2
     });
 
-	viewer.value.scene.globe.depthTestAgainstTerrain = true;
+    viewer.value.scene.globe.depthTestAgainstTerrain = true;
 
     viewer.value.camera.setView({
         destination: Cartesian3.fromDegrees(
@@ -131,10 +139,44 @@ onMounted(() => {
     })
 
     ;(window as any).viewer = viewer.value
-    
+
+    // Setup mouse interactions for hover pointer and clicking photo markers
+    handler = new ScreenSpaceEventHandler(viewer.value.scene.canvas)
+
+    // Pointer cursor on hover over photo markers
+	handler.setInputAction((movement: any) => {
+      const pickedObject = viewer.value?.scene.pick(movement.endPosition)
+      const canvas = viewer.value?.scene.canvas
+      if (!canvas) return
+
+      if (defined(pickedObject) && pickedObject.id?.properties?.photoId) {
+        canvas.style.cursor = 'pointer'
+      } else {
+        canvas.style.cursor = 'default'
+      }
+    }, ScreenSpaceEventType.MOUSE_MOVE)
+
+    // Click handler to open lightbox
+    handler.setInputAction((click: ScreenSpaceEventHandler.PositionedEvent) => {
+      const pickedObject = viewer.value?.scene.pick(click.position)
+
+      if (defined(pickedObject) && pickedObject.id?.properties) {
+        const properties = pickedObject.id.properties
+        const captureId = properties.captureId?.getValue()
+        const photoId = properties.photoId?.getValue()
+
+        if (captureId && photoId) {
+          emit('open-lightbox', { captureId, id: photoId })
+        }
+      }
+    }, ScreenSpaceEventType.LEFT_CLICK)
 });
 
 onBeforeUnmount(() => {
+  if (handler) {
+    handler.destroy()
+    handler = null
+  }
   if (viewer.value) {
     viewer.value.destroy()
   }
@@ -195,7 +237,7 @@ function handlePhotoEntities(payload: { captureId: string; enabled: boolean; pho
     const entityCollection = viewer.value.entities
     const primitiveCollection = viewer.value.scene.primitives
 
-    // 1. Always remove any existing photo entities (markers) associated with this capture ID first
+    // Always remove any existing photo entities (markers) associated with this capture ID first
     const entityIdsToRemove: string[] = []
     for (const entity of entityCollection.values) {
         if (entity?.id && typeof entity.id === 'string' && entity.id.startsWith(`photo_${captureId}_`)) {
@@ -205,24 +247,22 @@ function handlePhotoEntities(payload: { captureId: string; enabled: boolean; pho
 
     entityIdsToRemove.forEach(id => entityCollection.removeById(id))
 
-    // 2. Always remove any existing photo primitive pyramids associated with this capture ID first
+    // Always remove any existing photo primitive pyramids associated with this capture ID first
     const primitivesToRemove: any[] = []
     for (let i = 0; i < primitiveCollection.length; i++) {
         const primitive = primitiveCollection.get(i)
-        // We can track primitives via a custom tag or convention, or check a custom property if attached
         if ((primitive as any)._photoCaptureId === captureId) {
             primitivesToRemove.push(primitive)
         }
     }
     primitivesToRemove.forEach(p => primitiveCollection.remove(p))
 
-    // 3. GUARD: If the switch is turned off, STOP here. Do not add anything back!
+    // GUARD: If the switch is turned off, STOP here. Do not add anything back!
     if (!enabled) return
 
-    // 4. Only add them if enabled is explicitly true and we have photos
+    // Only add them if enabled is explicitly true and we have photos
     if (photos && photos.length > 0) {
         photos.forEach(photo => {
-			console.log(photo)
             let lat: number | undefined
             let lng: number | undefined
             let alt = photo.gpsAltitude ?? 0
@@ -252,24 +292,17 @@ function handlePhotoEntities(payload: { captureId: string; enabled: boolean; pho
 
                 // Add the 3D Camera Frustum Pyramid Primitive
                 try {
-                    /*const heading = CesiumMath.toRadians(photo.heading ?? 0)
-                    const pitch = CesiumMath.toRadians((photo.tiltY ?? 0))
-                    const roll = CesiumMath.toRadians(photo.roll ?? 0) */
-
-
-					const heading = CesiumMath.toRadians(photo.heading ?? 0) - (Math.PI / 2)
-					const rawTilt = photo.tiltY ?? 0
+                    const heading = CesiumMath.toRadians(photo.heading ?? 0) - (Math.PI / 2)
+                    const rawTilt = photo.tiltY ?? 0
                     const pitch = CesiumMath.toRadians(rawTilt - 90)
                     const roll = CesiumMath.toRadians(photo.roll ?? 0)
-
-
                     const fov = CesiumMath.toRadians(photo.fov ?? 60)
 
                     const frustum = new PerspectiveFrustum({
                         fov: fov,
                         aspectRatio: 4 / 3,
                         near: 1.0,
-                        far: 1000.0 // length of the frustum projection beam in meters
+                        far: 1000.0
                     })
 
                     const hpr = new HeadingPitchRoll(heading, pitch, roll)
@@ -297,7 +330,6 @@ function handlePhotoEntities(payload: { captureId: string; enabled: boolean; pho
                         })
                     })
 
-                    // Tag the primitive so we can easily query and clean it up on toggle off
                     ;(primitive as any)._photoCaptureId = captureId
 
                     primitiveCollection.add(primitive)
