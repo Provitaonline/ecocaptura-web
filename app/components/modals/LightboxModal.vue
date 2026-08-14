@@ -13,12 +13,15 @@
         <div class="button is-loading is-large is-white is-outlined is-borderless"></div>
       </div>
       
-      <img 
-        v-show="activeLightboxImage && !isActualImageLoading" 
-        :src="activeLightboxImage || ''" 
-        alt="Blown out photo view" 
-        @load="onImageLoaded"
-      />
+      <div class="lightbox-image-container">
+        <img 
+          ref="imageRef"
+          v-show="activeLightboxImage && !isActualImageLoading" 
+          :src="activeLightboxImage || ''" 
+          alt="Blown out photo view" 
+          @load="onImageLoaded"
+        />
+      </div>
     </div>
   </div>
 </template>
@@ -46,11 +49,25 @@
   align-items: center;
 }
 
+.lightbox-image-container {
+  overflow: hidden;
+  max-width: 90vw;
+  max-height: 90vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
 .lightbox-content img {
   max-width: 90vw;
   max-height: 90vh;
   object-fit: contain;
   border-radius: 4px;
+  cursor: grab;
+}
+
+.lightbox-content img:active {
+  cursor: grabbing;
 }
 
 .lightbox-close {
@@ -62,6 +79,7 @@
   color: white;
   font-size: 2rem;
   cursor: pointer;
+  z-index: 1000;
 }
 
 .lightbox-loader {
@@ -80,7 +98,8 @@
 
 <script setup lang="ts">
 import { getDownloadPresignedUrls } from '@/scripts/data/getDownloadPresignedUrls'
-import { ref, watch } from 'vue'
+import panzoom, { type PanZoom } from 'panzoom'
+import { nextTick, onUnmounted, ref, watch } from 'vue'
 
 const props = defineProps<{
   photo: { captureId: string; id: string } | null
@@ -93,14 +112,27 @@ const emit = defineEmits<{
 const activeLightboxImage = ref<string | null>(null)
 const isImageLoading = ref(false)
 const isActualImageLoading = ref(false)
+const imageRef = ref<HTMLImageElement | null>(null)
+
+let panzoomInstance: PanZoom | null = null
+
+const destroyPanzoom = () => {
+  if (panzoomInstance) {
+    panzoomInstance.dispose()
+    panzoomInstance = null
+  }
+}
 
 watch(() => props.photo, async (newPhoto) => {
   if (!newPhoto) {
+    destroyPanzoom()
     activeLightboxImage.value = null
     isImageLoading.value = false
     isActualImageLoading.value = false
     return
   }
+
+  destroyPanzoom()
 
   try {
     isImageLoading.value = true
@@ -120,7 +152,21 @@ watch(() => props.photo, async (newPhoto) => {
   }
 }, { immediate: true })
 
-const onImageLoaded = () => {
+const onImageLoaded = async () => {
   isActualImageLoading.value = false
+  await nextTick()
+  if (imageRef.value && !panzoomInstance) {
+    panzoomInstance = panzoom(imageRef.value, {
+      maxZoom: 5,
+      minZoom: 1,
+      bounds: true,
+      boundsPadding: 0.1,
+      zoomDoubleClickSpeed: 1,
+    })
+  }
 }
+
+onUnmounted(() => {
+  destroyPanzoom()
+})
 </script>
