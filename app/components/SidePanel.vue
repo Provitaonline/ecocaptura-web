@@ -30,7 +30,7 @@
         <div 
           v-for="item in filteredCaptures" 
           :key="item.captureId" 
-          class="card mb-3"
+          class="card mb-0"
         >
           <!-- Card Header -->
           <div class="card-header" @click="toggleCard(item)" style="cursor: pointer;">
@@ -141,6 +141,24 @@
   overflow: hidden;
   text-overflow: ellipsis;
   word-break: break-word;
+}
+
+.panel .panel-heading {
+  border-top-left-radius: 0px;
+  border-top-right-radius: 0px;
+}
+
+.panel {
+  border-radius: 0px;
+}
+
+.card {
+  border-radius: 0px;
+}
+
+.card-header {
+  background-color: rgba(85,107,47, 0.1);
+  border-bottom: 1px solid rgba(85,107,47, 0.2);
 }
 </style>
 

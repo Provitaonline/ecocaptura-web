@@ -1,29 +1,31 @@
 <template>
-  <div v-if="photo" class="lightbox-overlay" @click="emit('close')">
-    <div class="lightbox-content" @click.stop>
-      <button 
-        v-show="!isImageLoading && !isActualImageLoading" 
-        class="lightbox-close" 
-        @click="emit('close')"
-      >
-        &times;
-      </button>
-      
-      <div v-if="isImageLoading || isActualImageLoading" class="lightbox-loader">
-        <div class="button is-loading is-large is-white is-outlined is-borderless"></div>
-      </div>
-      
-      <div class="lightbox-image-container">
-        <img 
-          ref="imageRef"
-          v-show="activeLightboxImage && !isActualImageLoading" 
-          :src="activeLightboxImage || ''" 
-          alt="Blown out photo view" 
-          @load="onImageLoaded"
-        />
+  <Transition name="lightbox-fade">
+    <div v-if="photo" class="lightbox-overlay" @click="emit('close')">
+      <div class="lightbox-content" @click.stop>
+        <button 
+          v-show="!isImageLoading && !isActualImageLoading" 
+          class="lightbox-close" 
+          @click="emit('close')"
+        >
+          &times;
+        </button>
+        
+        <div v-if="isImageLoading || isActualImageLoading" class="lightbox-loader">
+          <div class="button is-loading is-large is-white is-outlined is-borderless"></div>
+        </div>
+        
+        <div class="lightbox-image-container">
+          <img 
+            ref="imageRef"
+            v-show="activeLightboxImage && !isActualImageLoading" 
+            :src="activeLightboxImage || ''" 
+            alt="Blown out photo view" 
+            @load="onImageLoaded"
+          />
+        </div>
       </div>
     </div>
-  </div>
+  </Transition>
 </template>
 
 <style scoped>
@@ -93,6 +95,28 @@
 .is-borderless {
   border: none !important;
   background: transparent !important;
+}
+
+/* Lightbox Fade & Scale Transition */
+.lightbox-fade-enter-active,
+.lightbox-fade-leave-active {
+  transition: opacity 0.25s ease;
+}
+
+.lightbox-fade-enter-active .lightbox-content,
+.lightbox-fade-leave-active .lightbox-content {
+  transition: transform 0.25s ease, opacity 0.25s ease;
+}
+
+.lightbox-fade-enter-from,
+.lightbox-fade-leave-to {
+  opacity: 0;
+}
+
+.lightbox-fade-enter-from .lightbox-content,
+.lightbox-fade-leave-to .lightbox-content {
+  opacity: 0;
+  transform: scale(0.95);
 }
 </style>
 
