@@ -98,6 +98,7 @@
 
 <script setup lang="ts">
 import { getDownloadPresignedUrls } from '@/scripts/data/getDownloadPresignedUrls'
+import { getCachedPresignedUrl, cachePresignedUrl } from '@/scripts/utils/presignedCache'
 import panzoom, { type PanZoom } from 'panzoom'
 import { nextTick, onUnmounted, ref, watch } from 'vue'
 
@@ -133,37 +134,35 @@ watch(() => props.photo, async (newPhoto) => {
   }
 
   destroyPanzoom()
+
+  // Check cache first!
+  const cachedUrl = getCachedPresignedUrl(newPhoto.id)
+  if (cachedUrl) {
+    activeLightboxImage.value = cachedUrl
+    isImageLoading.value = false
+    isActualImageLoading.value = true 
+    return
+  }
+
+  // Otherwise, fetch normally
   isImageLoading.value = true
   isActualImageLoading.value = true
 
-  let success = false
-  let attempts = 0
-
-  // Retry loop to accommodate background token refresh delays
-  while (!success && attempts < 2) {
-    attempts++
-    try {
-      const presignedUrls = await getDownloadPresignedUrls(newPhoto.captureId, [
-        { id: newPhoto.id, type: 'PHOTO' }
-      ])
-      const signedItem = presignedUrls.find(item => item.id === newPhoto.id)
-      if (signedItem?.downloadUrl) {
-        activeLightboxImage.value = signedItem.downloadUrl
-        success = true
-      }
-    } catch (error) {
-      console.warn(`Attempt ${attempts} failed to fetch presigned URL, retrying...`, error)
-      // Small pause to let any active token refresh finish committing to storage
-      if (attempts < 2) {
-        await new Promise(resolve => setTimeout(resolve, 800))
-      }
+  try {
+    const presignedUrls = await getDownloadPresignedUrls(newPhoto.captureId, [
+      { id: newPhoto.id, type: 'PHOTO' }
+    ])
+    const signedItem = presignedUrls.find(item => item.id === newPhoto.id)
+    if (signedItem?.downloadUrl) {
+      activeLightboxImage.value = signedItem.downloadUrl
+      // Cache it for subsequent opens
+      cachePresignedUrl(newPhoto.id, signedItem.downloadUrl)
     }
-  }
-
-  isImageLoading.value = false
-  if (!success) {
+  } catch (error) {
+    console.error('Error loading full image:', error)
     isActualImageLoading.value = false
-    console.error('Failed to load full image after refresh attempts.')
+  } finally {
+    isImageLoading.value = false
   }
 }, { immediate: true })
 
