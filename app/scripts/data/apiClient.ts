@@ -23,7 +23,22 @@ export async function apiClient<T>(endpoint: string, options: RequestInit = {}):
 
   let response = await makeRequest(accessToken)
 
-  if (response.status === 401 || response.status === 403) {
+  // Catch both HTTP 401/403 AND custom 200/4xx responses where error data returns InvalidToken
+  let responseData: any = null
+  const clone = response.clone()
+  try {
+    responseData = await clone.json()
+  } catch {
+    // Response wasn't JSON
+  }
+
+  const isTokenExpired = 
+    response.status === 401 || 
+    response.status === 403 || 
+    responseData?.error === 'InvalidToken' || 
+    responseData?.description?.includes('expired')
+
+  if (isTokenExpired) {
     const newToken = await auth.refreshAccessToken()
     if (newToken) {
       response = await makeRequest(newToken)
@@ -36,5 +51,5 @@ export async function apiClient<T>(endpoint: string, options: RequestInit = {}):
     throw new Error(`API Error [${endpoint}]: ${response.status} ${response.statusText}`)
   }
 
-  return await response.json()
+  return responseData || (await response.json())
 }

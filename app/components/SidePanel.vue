@@ -98,6 +98,7 @@
                       :src="photo.thumbnailUrl || '/images/placeholder.png'" 
                       :alt="photo.description || 'Capture photo thumbnail'"
                       style="object-fit: cover; border-radius: 4px;"
+                      @error="(e) => handleThumbnailError(item.captureId, photo, e)"
                     />
                   </figure>
                 </div>
@@ -149,6 +150,7 @@ import { getCaptures } from '~/scripts/data/captures'
 import { getCaptureDetails } from '~/scripts/data/captureDetails'
 import type { CaptureDetailRecord } from '~/scripts/data/captureDetails'
 import type { Capture } from '@/scripts/data/captures'
+import { getDownloadPresignedUrls } from '@/scripts/data/getDownloadPresignedUrls'
 
 const emit = defineEmits<{
   (e: 'update:filtered-captures', list: Capture[]): void
@@ -259,6 +261,25 @@ const handlePhotoToggle = async (captureId: string) => {
     enabled: isEnabled,
     photos: details?.photos || []
   })
+}
+
+const handleThumbnailError = async (captureId: string, photo: any, event: Event) => {
+  // Prevent infinite loops if the fallback / retry also fails
+  const imgElement = event.target as HTMLImageElement
+  if (imgElement.dataset.retried) return
+  imgElement.dataset.retried = 'true'
+
+  try {
+    const presignedUrls = await getDownloadPresignedUrls(captureId, [
+      { id: photo.photoId, type: 'THUMB' } // or 'PHOTO' depending on what type your thumbnail uses
+    ])
+    const signedItem = presignedUrls.find(item => item.id === photo.photoId)
+    if (signedItem?.downloadUrl) {
+      photo.thumbnailUrl = signedItem.downloadUrl
+    }
+  } catch (error) {
+    console.error('Failed to refresh expired thumbnail URL:', error)
+  }
 }
 
 const closeLightbox = () => {
