@@ -5,14 +5,21 @@
       @update:filtered-captures="(list: Capture[]) => filteredCaptures = list"
       @select-capture="handleSelectCapture"
       @toggle-capture-photos="handleToggleCapturePhotos"
+      @open-lightbox="openLightbox"
     />
 
     <div class="map-wrapper">
       <InteractiveMap 
         ref="mapRef"
         :captures="filteredCaptures" 
+        @open-lightbox="openLightbox"
       />
     </div>
+
+    <LightboxModal 
+      :photo="selectedPhoto"
+      @close="closeLightbox"
+    />
   </div>
 </template>
 
@@ -62,9 +69,11 @@ import { ref } from 'vue'
 import SidePanel from './SidePanel.vue'
 import InteractiveMap from './InteractiveMap.vue'
 import type { Capture } from '@/scripts/data/captures'
+import LightboxModal from './modals/LightboxModal.vue'
 
 const filteredCaptures = ref<Capture[]>([])
 const mapRef = ref<any>(null)
+const selectedPhoto = ref<{ captureId: string; id: string } | null>(null)
 
 function handleSelectCapture(item: Capture) {
   if (item.expanded && item.centroidCoordinates && mapRef.value) {
@@ -76,5 +85,13 @@ function handleToggleCapturePhotos(payload: { captureId: string; enabled: boolea
   if (mapRef.value) {
     mapRef.value.handlePhotoEntities(payload)
   }
+}
+
+function openLightbox(photo: { captureId: string; id: string }) {
+  selectedPhoto.value = photo
+}
+
+function closeLightbox() {
+  selectedPhoto.value = null
 }
 </script>

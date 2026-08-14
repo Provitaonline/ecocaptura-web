@@ -86,20 +86,22 @@
 
             <!-- Thumbnails Grid using Bulma columns -->
             <div v-else-if="captureDetailsMap[item.captureId]?.photos?.length" class="columns is-multiline is-mobile is-variable is-1 mt-1">
-              <div 
-                v-for="photo in captureDetailsMap[item.captureId]?.photos" 
-                :key="photo.photoId" 
-                class="column is-one-third"
-              >
-                <figure class="image is-square">
-                  <img 
-                    :src="photo.thumbnailUrl || '/images/placeholder.png'" 
-                    :alt="photo.description || 'Capture photo thumbnail'"
-                    style="object-fit: cover; border-radius: 4px;"
-                  />
-                </figure>
+                <div 
+                  v-for="photo in captureDetailsMap[item.captureId]?.photos" 
+                  :key="photo.photoId" 
+                  class="column is-one-third"
+                  @click="emit('open-lightbox', { captureId: item.captureId, id: photo.photoId })"
+                  style="cursor: pointer;"
+                >
+                  <figure class="image is-square">
+                    <img 
+                      :src="photo.thumbnailUrl || '/images/placeholder.png'" 
+                      :alt="photo.description || 'Capture photo thumbnail'"
+                      style="object-fit: cover; border-radius: 4px;"
+                    />
+                  </figure>
+                </div>
               </div>
-            </div>
 
             <p v-if="item.description" class="is-size-7 mb-2">
               {{ item.description }}
@@ -152,6 +154,7 @@ const emit = defineEmits<{
   (e: 'update:filtered-captures', list: Capture[]): void
   (e: 'select-capture', item: Capture): void
   (e: 'toggle-capture-photos', payload: { captureId: string; enabled: boolean; photos: any[] }): void
+  (e: 'open-lightbox', photo: { captureId: string; id: string }): void
 }>()
 
 const captureList = ref<Capture[]>([])
@@ -163,6 +166,9 @@ const captureDetailsMap = ref<Record<string, CaptureDetailRecord>>({})
 const loadingDetailsMap = ref<Record<string, boolean>>({})
 
 const showPhotosMap = ref<Record<string, boolean>>({})
+
+const activeLightboxImage = ref<string | null>(null);
+const isImageLoading = ref(false);
 
 const filteredCaptures = computed(() => {
   if (!captureList.value.length) return []
@@ -253,5 +259,9 @@ const handlePhotoToggle = async (captureId: string) => {
     enabled: isEnabled,
     photos: details?.photos || []
   })
+}
+
+const closeLightbox = () => {
+    activeLightboxImage.value = null;
 }
 </script>
