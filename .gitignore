@@ -6,6 +6,7 @@
 .cache
 dist
 /local/
+.vscode/
 
 # Node dependencies
 node_modules
