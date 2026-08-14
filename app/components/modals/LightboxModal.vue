@@ -133,22 +133,37 @@ watch(() => props.photo, async (newPhoto) => {
   }
 
   destroyPanzoom()
+  isImageLoading.value = true
+  isActualImageLoading.value = true
 
-  try {
-    isImageLoading.value = true
-    isActualImageLoading.value = true
-    const presignedUrls = await getDownloadPresignedUrls(newPhoto.captureId, [
-      { id: newPhoto.id, type: 'PHOTO' }
-    ])
-    const signedItem = presignedUrls.find(item => item.id === newPhoto.id)
-    if (signedItem?.downloadUrl) {
-      activeLightboxImage.value = signedItem.downloadUrl
+  let success = false
+  let attempts = 0
+
+  // Retry loop to accommodate background token refresh delays
+  while (!success && attempts < 2) {
+    attempts++
+    try {
+      const presignedUrls = await getDownloadPresignedUrls(newPhoto.captureId, [
+        { id: newPhoto.id, type: 'PHOTO' }
+      ])
+      const signedItem = presignedUrls.find(item => item.id === newPhoto.id)
+      if (signedItem?.downloadUrl) {
+        activeLightboxImage.value = signedItem.downloadUrl
+        success = true
+      }
+    } catch (error) {
+      console.warn(`Attempt ${attempts} failed to fetch presigned URL, retrying...`, error)
+      // Small pause to let any active token refresh finish committing to storage
+      if (attempts < 2) {
+        await new Promise(resolve => setTimeout(resolve, 800))
+      }
     }
-  } catch (error) {
-    console.error('Error loading full image:', error)
+  }
+
+  isImageLoading.value = false
+  if (!success) {
     isActualImageLoading.value = false
-  } finally {
-    isImageLoading.value = false
+    console.error('Failed to load full image after refresh attempts.')
   }
 }, { immediate: true })
 
