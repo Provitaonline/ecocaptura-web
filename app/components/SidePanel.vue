@@ -169,6 +169,7 @@ import { getCaptureDetails } from '~/scripts/data/captureDetails'
 import type { CaptureDetailRecord } from '~/scripts/data/captureDetails'
 import type { Capture } from '@/scripts/data/captures'
 import { getDownloadPresignedUrls } from '@/scripts/data/getDownloadPresignedUrls'
+import { cachePresignedUrl, getCachedPresignedUrl } from '@/scripts/utils/presignedCache'
 
 const emit = defineEmits<{
   (e: 'update:filtered-captures', list: Capture[]): void
@@ -255,6 +256,12 @@ const toggleCard = async (item: Capture) => {
         loadingDetailsMap.value[item.captureId] = true
         const details = await getCaptureDetails(item.captureId)
         captureDetailsMap.value[item.captureId] = details
+        details.photos?.forEach(photo => {
+          if (photo.thumbnailUrl) {
+            // Cache using a unique key for the thumbnail, e.g., `${photo.photoId}_thumb`
+            cachePresignedUrl(`${photo.photoId}_thumb`, photo.thumbnailUrl)
+          }
+        })
       } catch (error) {
         console.error(`Failed to load details for capture ${item.captureId}:`, error)
       } finally {
@@ -295,6 +302,15 @@ const handleThumbnailError = async (captureId: string, photo: any, event: Event)
   if (imgElement.dataset.retried) return
   imgElement.dataset.retried = 'true'
 
+  const cacheKey = `${photo.photoId}_thumb`
+
+  // Check cache first in case another component refreshed it recently
+  const cachedUrl = getCachedPresignedUrl(cacheKey)
+  if (cachedUrl) {
+    photo.thumbnailUrl = cachedUrl
+    return
+  }
+
   try {
     const presignedUrls = await getDownloadPresignedUrls(captureId, [
       { id: photo.photoId, type: 'THUMB' }
@@ -302,6 +318,7 @@ const handleThumbnailError = async (captureId: string, photo: any, event: Event)
     const signedItem = presignedUrls.find(item => item.id === photo.photoId)
     if (signedItem?.downloadUrl) {
       photo.thumbnailUrl = signedItem.downloadUrl
+      cachePresignedUrl(cacheKey, signedItem.downloadUrl)
     }
   } catch (error) {
     console.error('Failed to refresh expired thumbnail URL:', error)
