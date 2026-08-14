@@ -35,5 +35,7 @@
     "layer": "Mapas base y capas",
     "look_down": "Mirar hacia abajo",
     "reset_view": "Restablecer vista"
-  }
+  },
+  "captures": "Capturas",
+  "addToMap": "Añadir al mapa"
 }

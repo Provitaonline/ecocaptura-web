@@ -34,5 +34,7 @@
     "north_arrow": "North",
     "look_down": "Look down",
     "reset_view": "Reset view"
-  }
+  },
+  "captures": "Captures",
+  "addToMap": "Add to map"
 }

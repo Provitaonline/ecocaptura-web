@@ -2,7 +2,7 @@
   <div class="panel is-primary capture-sidebar">
     <!-- Panel Header & Search -->
     <div class="panel-heading">
-      Captures
+      {{ $t('captures') }}
     </div>
     <div class="panel-block">
       <p class="control has-icons-left">
@@ -70,7 +70,7 @@
                 size="is-small"
                 @change="handlePhotoToggle(item.captureId)"
               >
-                Add to map
+                {{ $t('addToMap') }}
               </b-switch>
             </div>
 
@@ -254,14 +254,33 @@ const toggleCard = async (item: Capture) => {
     if (!captureDetailsMap.value[item.captureId] && !loadingDetailsMap.value[item.captureId]) {
       try {
         loadingDetailsMap.value[item.captureId] = true
-        const details = await getCaptureDetails(item.captureId)
-        captureDetailsMap.value[item.captureId] = details
-        details.photos?.forEach(photo => {
-          if (photo.thumbnailUrl) {
-            // Cache using a unique key for the thumbnail, e.g., `${photo.photoId}_thumb`
-            cachePresignedUrl(`${photo.photoId}_thumb`, photo.thumbnailUrl)
+        
+        let details: any = null
+        let attempts = 0
+        
+        // Retry loop to accommodate background token refresh delays
+        while (!details && attempts < 2) {
+          attempts++
+          try {
+            details = await getCaptureDetails(item.captureId)
+          } catch (err) {
+            if (attempts < 2) {
+              await new Promise(resolve => setTimeout(resolve, 800))
+            } else {
+              throw err
+            }
           }
-        })
+        }
+
+        if (details) {
+          captureDetailsMap.value[item.captureId] = details
+          details.photos?.forEach((photo: any) => {
+            if (photo.thumbnailUrl) {
+              // Cache using a unique key for the thumbnail, e.g., `${photo.photoId}_thumb`
+              cachePresignedUrl(`${photo.photoId}_thumb`, photo.thumbnailUrl)
+            }
+          })
+        }
       } catch (error) {
         console.error(`Failed to load details for capture ${item.captureId}:`, error)
       } finally {
@@ -304,21 +323,18 @@ const handleThumbnailError = async (captureId: string, photo: any, event: Event)
 
   const cacheKey = `${photo.photoId}_thumb`
 
-  // Check cache first in case another component refreshed it recently
-  const cachedUrl = getCachedPresignedUrl(cacheKey)
-  if (cachedUrl) {
-    photo.thumbnailUrl = cachedUrl
-    return
-  }
-
   try {
+    // Attempt to fetch a fresh presigned URL from the backend
     const presignedUrls = await getDownloadPresignedUrls(captureId, [
       { id: photo.photoId, type: 'THUMB' }
     ])
     const signedItem = presignedUrls.find(item => item.id === photo.photoId)
+    
     if (signedItem?.downloadUrl) {
       photo.thumbnailUrl = signedItem.downloadUrl
       cachePresignedUrl(cacheKey, signedItem.downloadUrl)
+      // Reset retried dataset so if it somehow fails again later, it can try once more
+      imgElement.dataset.retried = ''
     }
   } catch (error) {
     console.error('Failed to refresh expired thumbnail URL:', error)

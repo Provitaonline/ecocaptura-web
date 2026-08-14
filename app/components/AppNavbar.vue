@@ -28,8 +28,8 @@
             </div>
 
             <div v-else>
-              <p class="has-text-centered">Logged in as {{ auth.username }}</p>
-              <b-button expanded type="is-danger" class="mt-3" @click="logout">Logout</b-button>
+              <p class="has-text-centered">{{$t('nav.welcome')}} {{ auth.username }}</p>
+              <b-button expanded type="is-danger" class="mt-3" @click="logout">{{$t('nav.logout')}}</b-button>
             </div>
           </div>
         </b-navbar-dropdown>
