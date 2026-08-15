@@ -85,7 +85,11 @@
             </div>
 
             <!-- Thumbnails Grid using Bulma columns -->
-            <div v-else-if="captureDetailsMap[item.captureId]?.photos?.length" class="columns is-multiline is-mobile is-variable is-1 mt-1">
+            <div 
+              v-else-if="captureDetailsMap[item.captureId]?.photos?.length" 
+              :key="detailsRefreshKeys[item.captureId] || 1"
+              class="columns is-multiline is-mobile is-variable is-1 mt-1"
+            >
                 <div 
                   v-for="photo in captureDetailsMap[item.captureId]?.photos" 
                   :key="photo.photoId" 
@@ -102,7 +106,7 @@
                     />
                   </figure>
                 </div>
-              </div>
+            </div>
 
             <p v-if="item.description" class="is-size-7 mb-2">
               {{ item.description }}
@@ -191,6 +195,8 @@ const showPhotosMap = ref<Record<string, boolean>>({})
 const activeLightboxImage = ref<string | null>(null);
 const isImageLoading = ref(false);
 
+const detailsRefreshKeys = ref<Record<string, number>>({})
+
 const filteredCaptures = computed(() => {
   if (!captureList.value.length) return []
   
@@ -251,23 +257,24 @@ const toggleCard = async (item: Capture) => {
     }
 
     // Fetch detailed data (including photos) incrementally if not already cached
-    if (!captureDetailsMap.value[item.captureId] && !loadingDetailsMap.value[item.captureId]) {
+    const existingDetails = captureDetailsMap.value[item.captureId]
+    if ((!existingDetails || !existingDetails.photos || existingDetails.photos.length === 0) && !loadingDetailsMap.value[item.captureId]) {
       try {
         loadingDetailsMap.value[item.captureId] = true
         
         let details: any = null
         let attempts = 0
         
-        // Retry loop to accommodate background token refresh delays
         while (!details && attempts < 2) {
           attempts++
           try {
-            details = await getCaptureDetails(item.captureId)
+            const response = await getCaptureDetails(item.captureId)
+            if (response && response.photos && response.photos.length > 0) {
+              details = response
+            }
           } catch (err) {
             if (attempts < 2) {
               await new Promise(resolve => setTimeout(resolve, 800))
-            } else {
-              throw err
             }
           }
         }
@@ -276,10 +283,10 @@ const toggleCard = async (item: Capture) => {
           captureDetailsMap.value[item.captureId] = details
           details.photos?.forEach((photo: any) => {
             if (photo.thumbnailUrl) {
-              // Cache using a unique key for the thumbnail, e.g., `${photo.photoId}_thumb`
               cachePresignedUrl(`${photo.photoId}_thumb`, photo.thumbnailUrl)
             }
           })
+          detailsRefreshKeys.value[item.captureId] = (detailsRefreshKeys.value[item.captureId] || 0) + 1
         }
       } catch (error) {
         console.error(`Failed to load details for capture ${item.captureId}:`, error)
