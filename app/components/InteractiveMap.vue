@@ -4,7 +4,7 @@
       
         <div id="cesiumContainer"></div>
 
-        <AreaOfInterestBoundary v-if="viewer" :viewer="viewer" :visible="overlayStates['aoi'] ?? true" :autoZoom="false" />
+        <AreaOfInterestBoundary :autoZoom="false" :viewer="viewer" :visible="overlayStates['aoi'] ?? true" v-if="viewer"/>
 
         <div class="map-top map-right" v-if="viewer">
             <NorthArrowControl :viewer="viewer" />
@@ -37,7 +37,6 @@
     inset: 0;
     overflow: hidden;
 }
-
 </style>
 
 <script setup lang="ts">
@@ -64,6 +63,9 @@ import {
   Color,
   ScreenSpaceEventHandler,
   ScreenSpaceEventType,
+  sampleTerrainMostDetailed,
+  Cartographic,
+  Ellipsoid,
   defined
 } from 'cesium'
 import 'cesium/Build/Cesium/Widgets/widgets.css'
@@ -96,7 +98,6 @@ const emit = defineEmits<{
   (e: 'open-lightbox', payload: { captureId: string; id: string }): void
 }>()
 
-// Make viewer a ref so the template can react when it initializes
 const viewer = ref<Viewer | null>(null)
 let handler: ScreenSpaceEventHandler | null = null
 
@@ -125,9 +126,9 @@ onMounted(() => {
         terrain: Terrain.fromWorldTerrain(),
         // @ts-ignore
         terrainExaggeration: 2
-    });
+    })
 
-    viewer.value.scene.globe.depthTestAgainstTerrain = true;
+    viewer.value.scene.globe.depthTestAgainstTerrain = true
 
     viewer.value.camera.setView({
         destination: Cartesian3.fromDegrees(
@@ -140,11 +141,9 @@ onMounted(() => {
 
     ;(window as any).viewer = viewer.value
 
-    // Setup mouse interactions for hover pointer and clicking photo markers
     handler = new ScreenSpaceEventHandler(viewer.value.scene.canvas)
 
-    // Pointer cursor on hover over photo markers
-	handler.setInputAction((movement: any) => {
+    handler.setInputAction((movement: any) => {
       const pickedObject = viewer.value?.scene.pick(movement.endPosition)
       const canvas = viewer.value?.scene.canvas
       if (!canvas) return
@@ -156,7 +155,6 @@ onMounted(() => {
       }
     }, ScreenSpaceEventType.MOUSE_MOVE)
 
-    // Click handler to open lightbox
     handler.setInputAction((click: ScreenSpaceEventHandler.PositionedEvent) => {
       const pickedObject = viewer.value?.scene.pick(click.position)
 
@@ -170,7 +168,7 @@ onMounted(() => {
         }
       }
     }, ScreenSpaceEventType.LEFT_CLICK)
-});
+})
 
 onBeforeUnmount(() => {
   if (handler) {
@@ -182,7 +180,6 @@ onBeforeUnmount(() => {
   }
 })
 
-// Watch for capture list updates to add markers to the Cesium globe
 watch(() => props.captures, (newCaptures) => {
     if (!viewer.value || !newCaptures) return
 
@@ -206,12 +203,11 @@ watch(() => props.captures, (newCaptures) => {
                     verticalOrigin: VerticalOrigin.BOTTOM
                 },
                 properties: { captureId: item.captureId }
-            });
+            })
         }
     })
 }, { deep: true })
 
-// Expose camera fly-to function for parent calls
 function flyToCapture(centroidString: string) {
   if (!viewer.value || !centroidString) return
   const parts = centroidString.split(',').map(Number)
@@ -229,7 +225,6 @@ function flyToCapture(centroidString: string) {
   }
 }
 
-// Handle toggling photo markers and 3D camera FOV pyramids on/off for a given capture
 function handlePhotoEntities(payload: { captureId: string; enabled: boolean; photos: any[] }) {
     if (!viewer.value) return
 
@@ -237,7 +232,6 @@ function handlePhotoEntities(payload: { captureId: string; enabled: boolean; pho
     const entityCollection = viewer.value.entities
     const primitiveCollection = viewer.value.scene.primitives
 
-    // Always remove any existing photo entities (markers) associated with this capture ID first
     const entityIdsToRemove: string[] = []
     for (const entity of entityCollection.values) {
         if (entity?.id && typeof entity.id === 'string' && entity.id.startsWith(`photo_${captureId}_`)) {
@@ -247,7 +241,6 @@ function handlePhotoEntities(payload: { captureId: string; enabled: boolean; pho
 
     entityIdsToRemove.forEach(id => entityCollection.removeById(id))
 
-    // Always remove any existing photo primitive pyramids associated with this capture ID first
     const primitivesToRemove: any[] = []
     for (let i = 0; i < primitiveCollection.length; i++) {
         const primitive = primitiveCollection.get(i)
@@ -257,87 +250,112 @@ function handlePhotoEntities(payload: { captureId: string; enabled: boolean; pho
     }
     primitivesToRemove.forEach(p => primitiveCollection.remove(p))
 
-    // GUARD: If the switch is turned off, STOP here. Do not add anything back!
     if (!enabled) return
 
-    // Only add them if enabled is explicitly true and we have photos
     if (photos && photos.length > 0) {
-        photos.forEach(photo => {
-            let lat: number | undefined
-            let lng: number | undefined
-            let alt = photo.gpsAltitude ?? 0
+        const positionsToSample: Cartographic[] = []
+        const validPhotos: Array<{ photo: any, cartographic: Cartographic }> = []
 
+        photos.forEach(photo => {
             if (photo.gpsCoordinates) {
                 const parts = photo.gpsCoordinates.split(',').map(Number)
-                lat = parts[0]
-                lng = parts[1]
-            }
+                const lat = parts[0]
+                const lng = parts[1]
 
-            if (lat !== undefined && lng !== undefined && !isNaN(lat) && !isNaN(lng)) {
-                const position = Cartesian3.fromDegrees(lng, lat, alt)
-
-                // Add the Photo Marker Billboard
-                entityCollection.add({
-                    id: `photo_${captureId}_${photo.photoId}`,
-                    position: position,
-                    billboard: {
-                        image: MAP_CONFIG.icons.photoMarker,
-                        scale: 1.0,
-                        heightReference: HeightReference.CLAMP_TO_GROUND,
-                        verticalOrigin: VerticalOrigin.BOTTOM,
-                        pixelOffset: new Cartesian3(0, -10, 0)
-                    },
-                    properties: { photoId: photo.photoId, captureId }
-                })
-
-                // Add the 3D Camera Frustum Pyramid Primitive
-                try {
-                    const heading = CesiumMath.toRadians(photo.heading ?? 0) - (Math.PI / 2)
-                    const rawTilt = photo.tiltY ?? 0
-                    const pitch = CesiumMath.toRadians(rawTilt - 90)
-                    const roll = CesiumMath.toRadians(photo.roll ?? 0)
-                    const fov = CesiumMath.toRadians(photo.fov ?? 60)
-
-                    const frustum = new PerspectiveFrustum({
-                        fov: fov,
-                        aspectRatio: 4 / 3,
-                        near: 1.0,
-                        far: 1000.0
-                    })
-
-                    const hpr = new HeadingPitchRoll(heading, pitch, roll)
-                    const orientation = Transforms.headingPitchRollQuaternion(position, hpr)
-
-                    const frustumGeometry = new FrustumGeometry({
-                        frustum: frustum,
-                        origin: position,
-                        orientation: orientation,
-                        vertexFormat: PerInstanceColorAppearance.VERTEX_FORMAT
-                    })
-
-                    const primitive = new Primitive({
-                        geometryInstances: new GeometryInstance({
-                            geometry: frustumGeometry,
-                            attributes: {
-                                color: ColorGeometryInstanceAttribute.fromColor(
-                                    Color.fromCssColorString('#3273dc').withAlpha(0.25)
-                                )
-                            }
-                        }),
-                        appearance: new PerInstanceColorAppearance({
-                            translucent: true,
-                            closed: true
-                        })
-                    })
-
-                    ;(primitive as any)._photoCaptureId = captureId
-
-                    primitiveCollection.add(primitive)
-                } catch (err) {
-                    console.error('Failed to construct photo FOV frustum geometry:', err)
+                if (lat !== undefined && lng !== undefined && !isNaN(lat) && !isNaN(lng)) {
+                    const alt = photo.gpsAltitude ?? 0 
+                    const cartographic = Cartographic.fromDegrees(lng, lat, alt)
+                    
+                    positionsToSample.push(cartographic)
+                    validPhotos.push({ photo, cartographic })
                 }
             }
         })
+
+        if (positionsToSample.length > 0) {
+            const terrainProvider = viewer.value.terrainProvider
+
+            const samplingPromise = terrainProvider && typeof sampleTerrainMostDetailed === 'function'
+                ? sampleTerrainMostDetailed(terrainProvider, positionsToSample)
+                : Promise.resolve(positionsToSample)
+
+            samplingPromise
+                .then(updatedPositions => {
+                    updatedPositions.forEach((cartographic, index) => {
+                        const item = validPhotos[index]
+                        if (!item || !cartographic) return
+                        
+                        const { photo } = item
+                        const captureId = photo.captureId
+
+                        //cartographic.height += 2
+
+                        const position = Ellipsoid.WGS84.cartographicToCartesian(cartographic)
+
+                        entityCollection.add({
+                            id: `photo_${captureId}_${photo.photoId}`,
+                            position: position,
+                            billboard: {
+                                image: MAP_CONFIG.icons.photoMarker,
+                                scale: 1.0,
+                                heightReference: HeightReference.NONE, 
+                                verticalOrigin: VerticalOrigin.BOTTOM,
+                                //pixelOffset: new Cartesian3(0, -10, 0)
+                            },
+                            properties: { photoId: photo.photoId, captureId }
+                        })
+
+                        try {
+                            const heading = CesiumMath.toRadians(photo.heading ?? 0) - (Math.PI / 2)
+                            const rawTilt = photo.tiltY ?? 0
+                            const pitch = CesiumMath.toRadians(rawTilt - 90)
+                            const roll = CesiumMath.toRadians(photo.roll ?? 0)
+                            const fov = CesiumMath.toRadians(photo.fov ?? 60)
+
+                            const frustum = new PerspectiveFrustum({
+                                fov: fov,
+                                aspectRatio: 4 / 3,
+                                near: 1.0,
+                                far: 1000.0
+                            })
+
+                            const hpr = new HeadingPitchRoll(heading, pitch, roll)
+                            const orientation = Transforms.headingPitchRollQuaternion(position, hpr)
+
+                            const frustumGeometry = new FrustumGeometry({
+                                frustum: frustum,
+                                origin: position,
+                                orientation: orientation,
+                                vertexFormat: PerInstanceColorAppearance.VERTEX_FORMAT
+                            })
+
+                            const primitive = new Primitive({
+                                geometryInstances: new GeometryInstance({
+                                    geometry: frustumGeometry,
+                                    attributes: {
+                                        color: ColorGeometryInstanceAttribute.fromColor(
+                                            Color.fromCssColorString('#3273dc').withAlpha(0.25)
+                                        )
+                                    }
+                                }),
+                                appearance: new PerInstanceColorAppearance({
+                                    translucent: true,
+                                    closed: true
+                                })
+                            })
+
+                            ;(primitive as any)._photoCaptureId = captureId
+
+                            primitiveCollection.add(primitive)
+                        } catch (err) {
+                            console.error('Failed to construct photo FOV frustum geometry:', err)
+                        }
+                    })
+                })
+                .catch(err => {
+                    console.error('Failed to sample terrain heights for photos:', err)
+                })
+        }
     }
 }
 
