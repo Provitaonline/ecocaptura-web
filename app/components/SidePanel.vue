@@ -325,13 +325,14 @@ const handlePhotoToggle = async (captureId: string) => {
 
 const handleThumbnailError = async (captureId: string, photo: any, event: Event) => {
   const imgElement = event.target as HTMLImageElement
-  if (imgElement.dataset.retried) return
-  imgElement.dataset.retried = 'true'
+  
+  const retries = parseInt(imgElement.dataset.retries || '0', 10)
+  if (retries >= 2) return
+  imgElement.dataset.retries = (retries + 1).toString()
 
   const cacheKey = `${photo.photoId}_thumb`
 
   try {
-    // Attempt to fetch a fresh presigned URL from the backend
     const presignedUrls = await getDownloadPresignedUrls(captureId, [
       { id: photo.photoId, type: 'THUMB' }
     ])
@@ -340,8 +341,6 @@ const handleThumbnailError = async (captureId: string, photo: any, event: Event)
     if (signedItem?.downloadUrl) {
       photo.thumbnailUrl = signedItem.downloadUrl
       cachePresignedUrl(cacheKey, signedItem.downloadUrl)
-      // Reset retried dataset so if it somehow fails again later, it can try once more
-      imgElement.dataset.retried = ''
     }
   } catch (error) {
     console.error('Failed to refresh expired thumbnail URL:', error)
