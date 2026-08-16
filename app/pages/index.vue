@@ -2,16 +2,14 @@
 <template>
   <div class="section">
     <div class="container">
-      <h1 class="title">Welcome to Ecocaptura</h1>
+      <h1 class="title">{{ homeContent?.title }}</h1>
       <p class="subtitle">
-        Your spatial mapping and environmental data platform.
+        {{ homeContent?.description }}
       </p>
       
       <div class="box">
         <h2 class="subtitle">Getting Started</h2>
-        <p>This is your landing page. You can navigate to your map view once we integrate the globe.</p>
-        
-        <br />
+        <ContentRenderer v-if="homeContent" :value="homeContent" />
         <NuxtLink to="/captures">Go to Captures</NuxtLink>
       </div>
     </div>
@@ -19,10 +17,16 @@
 </template>
 
 <script setup lang="ts">
-import { BButton } from 'buefy'
+import type { Collections } from '@nuxt/content'
 
-const goToMap = () => {
-  // We will create the map page next
-  console.log('Navigating to map...')
-}
+const { locale } = useI18n()
+
+const { data: homeContent } = await useAsyncData(
+  () => {
+    const collection = (`content_${locale.value}`) as keyof Collections
+    return queryCollection(collection).path('/home').first()
+  },
+  { watch: [locale] }
+)
+
 </script>

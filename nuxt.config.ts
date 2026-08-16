@@ -56,6 +56,7 @@ export default defineNuxtConfig({
   modules: [
     '@pinia/nuxt',
     '@nuxtjs/i18n',
-    '@nuxt/icon'
+    '@nuxt/icon',
+    '@nuxt/content'
   ] 
 })
