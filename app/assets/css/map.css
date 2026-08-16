@@ -140,10 +140,10 @@
 }
 
 /* Retina */
-.map-retina .map-control-layers-toggle {
+/*.map-retina .map-control-layers-toggle {
     background-image: url(~/assets/images/layers-2x.png);
     background-size: 26px 26px;
-}
+} */
 
 /* Touch */
 .map-touch .map-control-layers-toggle {

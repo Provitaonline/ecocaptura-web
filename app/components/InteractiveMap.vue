@@ -357,7 +357,7 @@ function handlePhotoEntities(payload: { captureId: string; enabled: boolean; pho
                         const headingDegrees = photo.heading ?? 0
                         const headingRad = CesiumMath.toRadians(headingDegrees)
                         try {
-                            const arrowLengthMeters = 15.0
+                            const arrowLengthMeters = 100.0
                             const transform = Transforms.eastNorthUpToFixedFrame(position)
 
                             const forwardX = Math.sin(headingRad) * arrowLengthMeters
