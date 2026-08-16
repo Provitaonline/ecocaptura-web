@@ -9,7 +9,7 @@
       
       <div class="box">
         <ContentRenderer class="content" v-if="homeContent" :value="homeContent" />
-        <NuxtLink to="/captures">{{$t('seeCaptures')}}</NuxtLink>
+        <NuxtLink v-if="auth.isLoggedIn" to="/captures">{{$t('seeCaptures')}}</NuxtLink>
       </div>
     </div>
   </div>
@@ -17,8 +17,10 @@
 
 <script setup lang="ts">
 import type { Collections } from '@nuxt/content'
+import { useAuthStore } from '~/scripts/stores/auth'
 
 const { locale } = useI18n()
+const auth = useAuthStore()
 
 const { data: homeContent } = await useAsyncData(
   () => {
