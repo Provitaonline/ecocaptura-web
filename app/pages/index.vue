@@ -8,9 +8,8 @@
       </p>
       
       <div class="box">
-        <h2 class="subtitle">Getting Started</h2>
-        <ContentRenderer v-if="homeContent" :value="homeContent" />
-        <NuxtLink to="/captures">Go to Captures</NuxtLink>
+        <ContentRenderer class="content" v-if="homeContent" :value="homeContent" />
+        <NuxtLink to="/captures">{{$t('seeCaptures')}}</NuxtLink>
       </div>
     </div>
   </div>

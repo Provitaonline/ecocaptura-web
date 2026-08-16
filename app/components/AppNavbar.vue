@@ -13,6 +13,13 @@
 
     <template #end>
       <b-navbar-item>
+        <template v-if="auth.isLoggedIn && route.path !== '/captures'">
+          <b-navbar-item v-if="auth.isLoggedIn" href="#">
+
+          <NuxtLink class="has-text-dark" to="/captures">{{$t('captures')}}</NuxtLink>
+
+          </b-navbar-item>
+        </template>
         <b-navbar-dropdown right arrowless ref="authDropdown">
           <template #label>
             <b-icon 
@@ -59,6 +66,7 @@ import RegisterModal from '~/components/modals/RegisterModal.vue'
 import { onMounted } from 'vue'
 import { useAuthStore } from '~/scripts/stores/auth'
 
+const route = useRoute()
 const config = useRuntimeConfig()
 const auth = useAuthStore()
 const authDropdown = ref<any>(null)

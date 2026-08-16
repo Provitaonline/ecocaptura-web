@@ -53,6 +53,11 @@ export default defineNuxtConfig({
     defaultLocale: 'es',
     strategy: 'prefix_except_default'
   } as any,
+  content: {
+    renderer: {
+      anchorLinks: false,
+    }
+  },
   modules: [
     '@pinia/nuxt',
     '@nuxtjs/i18n',

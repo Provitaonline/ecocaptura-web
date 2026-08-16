@@ -1,8 +1,8 @@
 ---
 title: "Bienvenido a ecocaptura"
-description: "Explora mapas and datos de captura de campo."
+description: "Explora datos de captura de campo en un mapa."
 ---
 
-# Hola usuario
+### Empezemos...
 
 Este contenido se carga desde un archivo Markdown!

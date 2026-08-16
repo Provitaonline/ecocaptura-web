@@ -1,8 +1,8 @@
 ---
 title: "Welcome to ecocaptura"
-description: "Explore maps and field data captures."
+description: "Explore field data captures on a map."
 ---
 
-# Hello user
+### Getting started...
 
 This content is loaded dynamically from a Markdown file!
