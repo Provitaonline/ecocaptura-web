@@ -229,6 +229,16 @@ onMounted(async () => {
     window.location.href = '/'
   })
 
+  window.addEventListener('auth-refreshed', async () => {
+    if (captureList.value.length === 0 && !loading.value) {
+      await fetchCaptures()
+    }
+  })
+
+  await fetchCaptures()
+})
+
+const fetchCaptures = async () => {
   loading.value = true
   try {
     captureList.value = await getCaptures()
@@ -237,7 +247,7 @@ onMounted(async () => {
   } finally {
     loading.value = false
   }
-})
+}
 
 const toggleCard = async (item: Capture) => {
   const wasExpanded = item.expanded

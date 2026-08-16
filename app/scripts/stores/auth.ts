@@ -74,6 +74,10 @@ export const useAuthStore = defineStore('auth', {
         
         if (newAccessToken) {
           tokenStorage.setAccessToken(newAccessToken)
+          
+          // Notify components that session tokens have been refreshed successfully
+          window.dispatchEvent(new CustomEvent('auth-refreshed'))
+          
           return newAccessToken
         }
       } catch (error) {
