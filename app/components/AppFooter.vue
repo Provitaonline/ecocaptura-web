@@ -2,8 +2,14 @@
     <section>
       <footer class="footer">
         <div class="has-text-centered">
-         Here goes the footer
+			{{ $t('developedBy') }} <a href="https://www.provita.org.ve/">Provita</a>
         </div>
       </footer>
     </section>
 </template>
+
+<style scoped>
+.footer {
+	padding: .75rem 1.5rem .75rem;
+}
+</style>
