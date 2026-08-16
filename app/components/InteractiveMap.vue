@@ -54,6 +54,7 @@ import {
   BoundingSphere,
   HeadingPitchRoll,
   Transforms,
+  Matrix4,
   PerspectiveFrustum,
   FrustumGeometry,
   GeometryInstance,
@@ -63,8 +64,8 @@ import {
   Color,
   ScreenSpaceEventHandler,
   ScreenSpaceEventType,
-  sampleTerrainMostDetailed,
-  Cartographic,
+  sampleTerrainMostDetailed, 
+  Cartographic, 
   Ellipsoid,
   defined
 } from 'cesium'
@@ -232,15 +233,20 @@ function handlePhotoEntities(payload: { captureId: string; enabled: boolean; pho
     const entityCollection = viewer.value.entities
     const primitiveCollection = viewer.value.scene.primitives
 
+    // 1. Remove all photo-related entities matching this capture ID
     const entityIdsToRemove: string[] = []
     for (const entity of entityCollection.values) {
-        if (entity?.id && typeof entity.id === 'string' && entity.id.startsWith(`photo_${captureId}_`)) {
+        if (entity?.id && typeof entity.id === 'string' && (
+            entity.id.startsWith(`photo_${captureId}_`) || 
+            entity.id.startsWith(`photo_arrow_${captureId}_`) ||
+            entity.id.startsWith(`photo_accuracy_${captureId}_`)
+        )) {
             entityIdsToRemove.push(entity.id)
         }
     }
-
     entityIdsToRemove.forEach(id => entityCollection.removeById(id))
 
+    // 2. Remove all photo-related 3D primitives (frustums) matching this capture ID
     const primitivesToRemove: any[] = []
     for (let i = 0; i < primitiveCollection.length; i++) {
         const primitive = primitiveCollection.get(i)
@@ -250,6 +256,7 @@ function handlePhotoEntities(payload: { captureId: string; enabled: boolean; pho
     }
     primitivesToRemove.forEach(p => primitiveCollection.remove(p))
 
+    // GUARD: If toggle is disabled, stop here after clearing everything out
     if (!enabled) return
 
     if (photos && photos.length > 0) {
@@ -288,10 +295,52 @@ function handlePhotoEntities(payload: { captureId: string; enabled: boolean; pho
                         const { photo } = item
                         const captureId = photo.captureId
 
-                        //cartographic.height += 2
-
                         const position = Ellipsoid.WGS84.cartographicToCartesian(cartographic)
 
+                        // 1. Add Accuracy Circle via Polyline
+						const accuracyRadius = photo.gpsAccuracy ?? 10.0
+						try {
+							const pointsCount = 32
+							const finalPositions: Cartesian3[] = []
+							const transform = Transforms.eastNorthUpToFixedFrame(position)
+
+							for (let i = 0; i < pointsCount; i++) {
+								const angle = (i / pointsCount) * (2 * Math.PI)
+								const dx = accuracyRadius * Math.cos(angle)
+								const dy = accuracyRadius * Math.sin(angle)
+								
+								const pt = Matrix4.multiplyByPoint(
+									transform, 
+									new Cartesian3(dx, dy, 0.2), 
+									new Cartesian3()
+								)
+								if (pt) {
+									finalPositions.push(pt as Cartesian3)
+								}
+							}
+
+							if (finalPositions.length > 0) {
+								const firstPoint = finalPositions[0]
+								if (firstPoint) {
+									const outlinePositions: Cartesian3[] = [...finalPositions, firstPoint]
+									
+									entityCollection.add({
+										id: `photo_accuracy_${captureId}_${photo.photoId}`,
+										polyline: {
+											positions: outlinePositions,
+											width: 2.0,
+											material: Color.fromCssColorString('#3273dc').withAlpha(0.6),
+											clampToGround: true
+										},
+										properties: { photoId: photo.photoId, captureId }
+									})
+								}
+							}
+						} catch (err) {
+							console.error('Failed to create GPS accuracy circle:', err)
+						}
+
+                        // 2. Add Photo Marker Billboard
                         entityCollection.add({
                             id: `photo_${captureId}_${photo.photoId}`,
                             position: position,
@@ -299,12 +348,48 @@ function handlePhotoEntities(payload: { captureId: string; enabled: boolean; pho
                                 image: MAP_CONFIG.icons.photoMarker,
                                 scale: 1.0,
                                 heightReference: HeightReference.NONE, 
-                                verticalOrigin: VerticalOrigin.BOTTOM,
-                                //pixelOffset: new Cartesian3(0, -10, 0)
+                                verticalOrigin: VerticalOrigin.BOTTOM
                             },
                             properties: { photoId: photo.photoId, captureId }
                         })
 
+                        // 3. Add Ground Polyline Arrow pointing along heading vector
+                        const headingDegrees = photo.heading ?? 0
+                        const headingRad = CesiumMath.toRadians(headingDegrees)
+                        try {
+                            const arrowLengthMeters = 15.0
+                            const transform = Transforms.eastNorthUpToFixedFrame(position)
+
+                            const forwardX = Math.sin(headingRad) * arrowLengthMeters
+                            const forwardY = Math.cos(headingRad) * arrowLengthMeters
+                            const tipCartesian = Matrix4.multiplyByPoint(transform, new Cartesian3(forwardX, forwardY, 0), new Cartesian3())
+
+                            const wingBackDist = 5.0
+                            const wingWidthDist = 4.0
+                            const backX = Math.sin(headingRad) * (arrowLengthMeters - wingBackDist)
+                            const backY = Math.cos(headingRad) * (arrowLengthMeters - wingBackDist)
+                            
+                            const perpX = Math.cos(headingRad) * wingWidthDist
+                            const perpY = -Math.sin(headingRad) * wingWidthDist
+
+                            const leftWing = Matrix4.multiplyByPoint(transform, new Cartesian3(backX - perpX, backY - perpY, 0), new Cartesian3())
+                            const rightWing = Matrix4.multiplyByPoint(transform, new Cartesian3(backX + perpX, backY + perpY, 0), new Cartesian3())
+
+                            entityCollection.add({
+                                id: `photo_arrow_${captureId}_${photo.photoId}`,
+                                polyline: {
+                                    positions: [leftWing, tipCartesian, rightWing],
+                                    width: 3.0,
+                                    material: Color.fromCssColorString('#3273dc'),
+                                    clampToGround: true
+                                },
+                                properties: { photoId: photo.photoId, captureId }
+                            })
+                        } catch (err) {
+                            console.error('Failed to create ground polyline arrow:', err)
+                        }
+
+                        // 4. Add 3D Camera Frustum Pyramid Primitive
                         try {
                             const heading = CesiumMath.toRadians(photo.heading ?? 0) - (Math.PI / 2)
                             const rawTilt = photo.tiltY ?? 0
