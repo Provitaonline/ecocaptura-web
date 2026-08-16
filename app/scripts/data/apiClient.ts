@@ -38,10 +38,11 @@ export async function apiClient<T>(endpoint: string, options: RequestInit = {}):
     responseData?.error === 'InvalidToken' || 
     responseData?.description?.includes('expired')
 
-  if (isTokenExpired) {
+if (isTokenExpired) {
     const newToken = await auth.refreshAccessToken()
     if (newToken) {
       response = await makeRequest(newToken)
+      responseData = null 
     } else {
       throw new Error('Unauthorized: Session could not be refreshed.')
     }

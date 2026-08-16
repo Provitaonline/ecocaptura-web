@@ -223,31 +223,25 @@ watch(filteredCaptures, (newList) => {
   emit('update:filtered-captures', newList)
 }, { immediate: true })
 
-onMounted(async () => {
-  window.addEventListener('auth-expired', () => {
-    console.warn("User session has ended. Redirecting or showing login modal.")
-    window.location.href = '/'
-  })
-
-  window.addEventListener('auth-refreshed', async () => {
-    if (captureList.value.length === 0 && !loading.value) {
-      await fetchCaptures()
-    }
-  })
-
-  await fetchCaptures()
-})
-
 const fetchCaptures = async () => {
   loading.value = true
   try {
     captureList.value = await getCaptures()
   } catch (error) {
-    console.error("Could not load capture list", error)
+    console.error("Error loading captures:", error)
+    captureList.value = []
   } finally {
     loading.value = false
   }
 }
+
+onMounted(async () => {
+  window.addEventListener('auth-expired', () => {
+    window.location.href = '/'
+  })
+
+  await fetchCaptures()
+})
 
 const toggleCard = async (item: Capture) => {
   const wasExpanded = item.expanded
