@@ -97,6 +97,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'open-lightbox', payload: { captureId: string; id: string }): void
+  (e: 'open-capture', captureId: string): void
 }>()
 
 const viewer = ref<Viewer | null>(null)
@@ -149,7 +150,7 @@ onMounted(() => {
       const canvas = viewer.value?.scene.canvas
       if (!canvas) return
 
-      if (defined(pickedObject) && pickedObject.id?.properties?.photoId) {
+      if (defined(pickedObject) && (pickedObject.id?.properties?.photoId || pickedObject.id?.properties?.captureId)) {
         canvas.style.cursor = 'pointer'
       } else {
         canvas.style.cursor = 'default'
@@ -165,7 +166,10 @@ onMounted(() => {
         const photoId = properties.photoId?.getValue()
 
         if (captureId && photoId) {
-          emit('open-lightbox', { captureId, id: photoId })
+        	emit('open-lightbox', { captureId, id: photoId })
+        } else if (captureId) {
+			console.log('emit open-capture')
+        	emit('open-capture', captureId)
         }
       }
     }, ScreenSpaceEventType.LEFT_CLICK)
@@ -201,7 +205,8 @@ watch(() => props.captures, (newCaptures) => {
                     image: '/images/blue_marker.png',
                     scale: 1.0,
                     heightReference: HeightReference.CLAMP_TO_GROUND,
-                    verticalOrigin: VerticalOrigin.BOTTOM
+                    verticalOrigin: VerticalOrigin.BOTTOM,
+					eyeOffset: new Cartesian3(0.0, 0.0, -15.0)
                 },
                 properties: { captureId: item.captureId }
             })

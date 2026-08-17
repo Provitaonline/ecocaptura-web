@@ -25,11 +25,12 @@
     </div>
 
     <!-- Capture List -->
-    <div v-else class="capture-list-container">
+    <div v-else class="capture-list-container" ref="panelContainerRef">
       <template v-if="filteredCaptures.length > 0">
         <div 
           v-for="item in filteredCaptures" 
-          :key="item.captureId" 
+          :key="item.captureId"
+          :ref="(el) => { if (el) cardRefs[item.captureId] = el as HTMLElement }"
           class="card mb-0"
         >
           <!-- Card Header -->
@@ -128,11 +129,13 @@
 <style scoped>
 .capture-sidebar {
   height: 100%;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* Prevent sidebar from scrolling as a whole */
 }
 .capture-list-container {
-  max-height: calc(100vh - 120px);
-  overflow-y: auto;
+  flex-grow: 1;
+  overflow-y: auto; /* Restricts scrolling strictly to this container */
 }
 .border-top {
   border-top: 1px solid #dbdbdb;
@@ -186,14 +189,17 @@ const captureList = ref<Capture[]>([])
 const searchString = ref('')
 const loading = ref(false)
 
+const panelContainerRef = ref<HTMLElement | null>(null)
+const cardRefs = ref<Record<string, HTMLElement>>({})
+
 // Store detailed capture records keyed by captureId
 const captureDetailsMap = ref<Record<string, CaptureDetailRecord>>({})
 const loadingDetailsMap = ref<Record<string, boolean>>({})
 
 const showPhotosMap = ref<Record<string, boolean>>({})
 
-const activeLightboxImage = ref<string | null>(null);
-const isImageLoading = ref(false);
+const activeLightboxImage = ref<string | null>(null)
+const isImageLoading = ref(false)
 
 const detailsRefreshKeys = ref<Record<string, number>>({})
 
@@ -243,73 +249,92 @@ onMounted(async () => {
   await fetchCaptures()
 })
 
+// --- Card & Detail Handlers ---
+
+// Isolated detail fetching logic with retry mechanism
+const fetchCaptureDetailsIfNeeded = async (captureId: string) => {
+  const existingDetails = captureDetailsMap.value[captureId]
+  const hasPhotos = existingDetails?.photos && existingDetails.photos.length > 0
+
+  if (hasPhotos || loadingDetailsMap.value[captureId]) return
+
+  try {
+    loadingDetailsMap.value[captureId] = true
+    
+    let details: any = null
+    let attempts = 0
+    
+    while (!details && attempts < 2) {
+      attempts++
+      try {
+        const response = await getCaptureDetails(captureId)
+        if (response && response.photos && response.photos.length > 0) {
+          details = response
+        }
+      } catch (err) {
+        if (attempts < 2) {
+          await new Promise(resolve => setTimeout(resolve, 800))
+        }
+      }
+    }
+
+    if (details) {
+      captureDetailsMap.value[captureId] = details
+      details.photos?.forEach((photo: any) => {
+        if (photo.thumbnailUrl) {
+          cachePresignedUrl(`${photo.photoId}_thumb`, photo.thumbnailUrl)
+        }
+      })
+      detailsRefreshKeys.value[captureId] = (detailsRefreshKeys.value[captureId] || 0) + 1
+    }
+  } catch (error) {
+    console.error(`Failed to load details for capture ${captureId}:`, error)
+  } finally {
+    loadingDetailsMap.value[captureId] = false
+  }
+}
+
+// Handle everything needed when a card opens
+const handleCardOpened = async (item: Capture) => {
+  if (item.centroidCoordinates) {
+    emit('select-capture', item)
+    const parts = item.centroidCoordinates.split(',').map(Number)
+    const lat = parts[0]
+    const lng = parts[1]
+
+    if (lat !== undefined && lng !== undefined && !isNaN(lat) && !isNaN(lng)) {
+      console.log(`Centering map at: Lat ${lat}, Lng ${lng}`)
+    }
+  }
+
+  await fetchCaptureDetailsIfNeeded(item.captureId)
+}
+
+// Handle cleanup when a card closes
+const handleCardClosed = (item: Capture) => {
+  if (showPhotosMap.value[item.captureId]) {
+    showPhotosMap.value[item.captureId] = false
+    emit('toggle-capture-photos', {
+      captureId: item.captureId,
+      enabled: false,
+      photos: []
+    })
+  }
+}
+
+// Main toggle card function cleanly orchestrating the states
 const toggleCard = async (item: Capture) => {
   const wasExpanded = item.expanded
   item.expanded = !item.expanded
   
   if (item.expanded) {
-    // Map navigation trigger
-    if (item.centroidCoordinates) {
-      emit('select-capture', item)
-      const parts = item.centroidCoordinates.split(',').map(Number)
-      const lat = parts[0]
-      const lng = parts[1]
-
-      if (lat !== undefined && lng !== undefined && !isNaN(lat) && !isNaN(lng)) {
-        console.log(`Centering map at: Lat ${lat}, Lng ${lng}`)
-      }
-    }
-
-    // Fetch detailed data (including photos) incrementally if not already cached
-    const existingDetails = captureDetailsMap.value[item.captureId]
-    if ((!existingDetails || !existingDetails.photos || existingDetails.photos.length === 0) && !loadingDetailsMap.value[item.captureId]) {
-      try {
-        loadingDetailsMap.value[item.captureId] = true
-        
-        let details: any = null
-        let attempts = 0
-        
-        while (!details && attempts < 2) {
-          attempts++
-          try {
-            const response = await getCaptureDetails(item.captureId)
-            if (response && response.photos && response.photos.length > 0) {
-              details = response
-            }
-          } catch (err) {
-            if (attempts < 2) {
-              await new Promise(resolve => setTimeout(resolve, 800))
-            }
-          }
-        }
-
-        if (details) {
-          captureDetailsMap.value[item.captureId] = details
-          details.photos?.forEach((photo: any) => {
-            if (photo.thumbnailUrl) {
-              cachePresignedUrl(`${photo.photoId}_thumb`, photo.thumbnailUrl)
-            }
-          })
-          detailsRefreshKeys.value[item.captureId] = (detailsRefreshKeys.value[item.captureId] || 0) + 1
-        }
-      } catch (error) {
-        console.error(`Failed to load details for capture ${item.captureId}:`, error)
-      } finally {
-        loadingDetailsMap.value[item.captureId] = false
-      }
-    }
+    await handleCardOpened(item)
   } else if (wasExpanded) {
-    // Card is being closed/collapsed: turn off switch and remove markers from map
-    if (showPhotosMap.value[item.captureId]) {
-      showPhotosMap.value[item.captureId] = false
-      emit('toggle-capture-photos', {
-        captureId: item.captureId,
-        enabled: false,
-        photos: []
-      })
-    }
+    handleCardClosed(item)
   }
 }
+
+// --- Utility & Event Handlers ---
 
 const formatDate = (dateString?: string): string => {
   if (!dateString) return 'Unknown date'
@@ -352,6 +377,33 @@ const handleThumbnailError = async (captureId: string, photo: any, event: Event)
 }
 
 const closeLightbox = () => {
-    activeLightboxImage.value = null;
+  activeLightboxImage.value = null
 }
+
+// Programmatically open a capture from external triggers (like a map marker click)
+const openCaptureById = async (captureId: string) => {
+  const item = captureList.value.find(c => c.captureId === captureId)
+  if (item) {
+    item.expanded = true
+    await handleCardOpened(item)
+
+    // Wait for Vue to render the expanded DOM changes
+    await nextTick()
+
+    const cardEl = cardRefs.value[captureId]
+    if (cardEl) {
+      cardEl.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start' 
+      })
+    }
+  }
+}
+
+// Expose methods to the parent component
+defineExpose({
+  openCaptureById,
+  handleCardOpened,
+  toggleCard
+})
 </script>

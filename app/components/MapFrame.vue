@@ -1,11 +1,12 @@
 <template>
   <div class="main-layout">
     <SidePanel 
-      class="sidebar" 
-      @update:filtered-captures="(list: Capture[]) => filteredCaptures = list"
-      @select-capture="handleSelectCapture"
-      @toggle-capture-photos="handleToggleCapturePhotos"
-      @open-lightbox="openLightbox"
+		ref="sidePanelRef"
+      	class="sidebar" 
+		@update:filtered-captures="(list: Capture[]) => filteredCaptures = list"
+		@select-capture="handleSelectCapture"
+		@toggle-capture-photos="handleToggleCapturePhotos"
+		@open-lightbox="openLightbox"
     />
 
     <div class="map-wrapper">
@@ -13,6 +14,7 @@
         ref="mapRef"
         :captures="filteredCaptures" 
         @open-lightbox="openLightbox"
+		@open-capture="handleOpenCaptureCard"
       />
     </div>
 
@@ -74,6 +76,7 @@ import LightboxModal from './modals/LightboxModal.vue'
 const filteredCaptures = ref<Capture[]>([])
 const mapRef = ref<any>(null)
 const selectedPhoto = ref<{ captureId: string; id: string } | null>(null)
+const sidePanelRef = ref<InstanceType<typeof SidePanel> | null>(null)
 
 function handleSelectCapture(item: Capture) {
   if (item.expanded && item.centroidCoordinates && mapRef.value) {
@@ -93,5 +96,10 @@ function openLightbox(photo: { captureId: string; id: string }) {
 
 function closeLightbox() {
   selectedPhoto.value = null
+}
+
+function handleOpenCaptureCard(captureId: string) {
+	console.log("open capture")
+	sidePanelRef.value?.openCaptureById(captureId)
 }
 </script>
