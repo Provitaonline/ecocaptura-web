@@ -36,6 +36,10 @@
     "look_down": "Mirar hacia abajo",
     "reset_view": "Restablecer vista"
   },
+  "errors": {
+    "noCaptures": "No se encontraron capturas.",
+    "noPhotos": "Esta captura no tiene fotos."
+  },
   "captures": "Capturas",
   "seeCaptures": "Ver capturas",
   "addToMap": "Añadir al mapa",

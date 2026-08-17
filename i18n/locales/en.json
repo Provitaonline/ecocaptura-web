@@ -35,6 +35,10 @@
     "look_down": "Look down",
     "reset_view": "Reset view"
   },
+  "errors": {
+    "noCaptures": "No matching captures found.",
+    "noPhotos": "No photos attached to this capture."
+  },
   "captures": "Captures",
   "seeCaptures": "See captures",
   "addToMap": "Add to map",

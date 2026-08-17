@@ -113,13 +113,13 @@
             </p>
 
             <p v-else-if="captureDetailsMap[item.captureId]" class="is-size-7 has-text-grey">
-              No photos attached to this capture.
+              {{$t('errors.noPhotos')}}
             </p>
           </div> 
         </div>
       </template>
       <div v-else class="panel-block has-text-grey is-size-7">
-        No matching captures found.
+        {{$t('errors.noCaptures')}}
       </div>
     </div>
   </div>
