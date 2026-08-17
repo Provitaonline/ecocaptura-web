@@ -21,7 +21,7 @@
     <!-- Loading State -->
     <div v-if="loading" class="has-text-centered p-4">
       <span class="icon is-medium fas fa-spinner fa-pulse"></span>
-      <p class="is-size-7 has-text-grey">Loading captures...</p>
+      <p class="is-size-7 has-text-grey">{{ $t('loadingCaptures') }}...</p>
     </div>
 
     <!-- Capture List -->

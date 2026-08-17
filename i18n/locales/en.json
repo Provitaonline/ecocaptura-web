@@ -42,5 +42,6 @@
   "captures": "Captures",
   "seeCaptures": "See captures",
   "addToMap": "Add to map",
-  "developedBy": "This testing site is currently being developed by "
+  "developedBy": "This testing site is currently being developed by ",
+  "loadingCaptures": "Loading captures"
 }
