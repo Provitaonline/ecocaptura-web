@@ -1,4 +1,5 @@
 import { resolve } from 'path'
+import pkg from './package.json'
 
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
@@ -30,7 +31,8 @@ export default defineNuxtConfig({
     public: {
       cesiumIonToken: process.env.NUXT_CESIUM_ION_TOKEN,
       googleClientId: '1094233920540-0p9k7abpr4769drbm70f0f33os3caa9c.apps.googleusercontent.com',
-      apiBase: 'https://fgq9vq9c6j.execute-api.us-east-2.amazonaws.com/Prod'
+      apiBase: 'https://fgq9vq9c6j.execute-api.us-east-2.amazonaws.com/Prod',
+      appVersion: (pkg as any).version
     },
   },
   app: {
