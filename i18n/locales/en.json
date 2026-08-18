@@ -21,7 +21,8 @@
   },
   "map": {
     "overlays": {
-      "aoi": "Border"
+      "aoi": "Border",
+      "mapbiomas": "Mapbiomas 2024"
     },
     "basemaps": {
       "mwi": "Microsoft World Imagery",

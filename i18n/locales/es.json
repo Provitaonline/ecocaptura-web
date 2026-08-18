@@ -22,7 +22,9 @@
   },
   "map": {
     "overlays": {
-      "aoi": "Límites"
+      "aoi": "Límites",
+      "mapbiomas": "Mapbiomas 2024"
+
     },
     "basemaps": {
       "mwi": "Capa de imágenes de Bing",
