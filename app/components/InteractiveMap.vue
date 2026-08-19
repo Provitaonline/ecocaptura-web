@@ -41,6 +41,7 @@
 </style>
 
 <script setup lang="ts">
+// @ts-ignore
 import '@/assets/css/map.css'
 import { onMounted, ref, onBeforeUnmount, watch } from 'vue'
 import { 
@@ -66,10 +67,11 @@ import {
   ScreenSpaceEventHandler,
   ScreenSpaceEventType,
   sampleTerrainMostDetailed, 
-  Cartographic, 
+  Cartographic,
   Ellipsoid,
   defined
 } from 'cesium'
+// @ts-ignore
 import 'cesium/Build/Cesium/Widgets/widgets.css'
 import ZoomControl from './mapControls/ZoomControl.vue'
 import NorthArrowControl from './mapControls/NorthArrowControl.vue'
@@ -159,21 +161,41 @@ onMounted(() => {
       }
     }, ScreenSpaceEventType.MOUSE_MOVE)
 
-    handler.setInputAction((click: ScreenSpaceEventHandler.PositionedEvent) => {
-      const pickedObject = viewer.value?.scene.pick(click.position)
+	handler.setInputAction(async (click: ScreenSpaceEventHandler.PositionedEvent) => {
+        const viewerInstance = viewer.value
+        if (!viewerInstance || viewerInstance.isDestroyed()) return
 
-      if (defined(pickedObject) && pickedObject.id?.properties) {
-        const properties = pickedObject.id.properties
-        const captureId = properties.captureId?.getValue()
-        const photoId = properties.photoId?.getValue()
+        // 1. Handle existing GeoJSON / Entity clicks (Lightbox & Captures)
+        const pickedObject = viewerInstance.scene.pick(click.position)
 
-        if (captureId && photoId) {
-        	emit('open-lightbox', { captureId, id: photoId })
-        } else if (captureId) {
-			console.log('emit open-capture')
-        	emit('open-capture', captureId)
+        if (defined(pickedObject) && pickedObject.id?.properties) {
+            const properties = pickedObject.id.properties
+            const captureId = properties.captureId?.getValue()
+            const photoId = properties.photoId?.getValue()
+
+            if (captureId && photoId) {
+                emit('open-lightbox', { captureId, id: photoId })
+                return 
+            } else if (captureId) {
+                console.log('emit open-capture')
+                emit('open-capture', captureId)
+                return 
+            }
         }
-      }
+
+        const { queryAllLayers } = useMapLayers()
+        const ray = viewerInstance.camera.getPickRay(click.position)
+        const cartesian = ray ? viewerInstance.scene.globe.pick(ray, viewerInstance.scene) : undefined
+
+        if (cartesian) {
+            const cartographic = Cartographic.fromCartesian(cartesian)
+            const layerResults = await queryAllLayers(cartesian, cartographic, click.position)
+            
+            if (layerResults.length > 0) {
+            console.log('Combined Layer Info:', layerResults)
+            }
+        }
+
     }, ScreenSpaceEventType.LEFT_CLICK)
 })
 

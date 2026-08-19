@@ -47,6 +47,4 @@ onUnmounted(() => {
 })
 </script>
 
-<template>
-  <!-- Functional map layer component -->
-</template>
+<template></template>
