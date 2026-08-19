@@ -16,6 +16,15 @@
             <ResetViewControl :viewer="viewer" />
         </div>
 
+        <MapPopup
+            ref="popupRef"
+            v-if="popupInfo.visible"
+            :x="popupInfo.x"
+            :y="popupInfo.y"
+            :results="popupInfo.results"
+            @close="closePopup"
+        />
+
     </div>
   </div>
 </template>
@@ -81,6 +90,7 @@ import ResetViewControl from './mapControls/ResetViewControl.vue'
 import { MAP_CONFIG } from '@/scripts/config'
 import { reactive } from 'vue'
 import { overlayLayers } from '@/scripts/map/overlays'
+import MapPopup from './MapPopup.vue'
 
 declare global {
   interface Window {
@@ -102,8 +112,16 @@ const emit = defineEmits<{
   (e: 'open-capture', captureId: string): void
 }>()
 
+const popupRef = ref<HTMLElement | null>(null)
 const viewer = ref<Viewer | null>(null)
 let handler: ScreenSpaceEventHandler | null = null
+
+const popupInfo = ref({
+  visible: false,
+  x: 0,
+  y: 0,
+  results: [] as Array<{ title: string; content: string }>
+})
 
 const overlayStates = reactive<Record<string, boolean>>(
   Object.fromEntries(overlayLayers.map(layer => [layer.id, layer.defaultVisible]))
@@ -111,6 +129,16 @@ const overlayStates = reactive<Record<string, boolean>>(
 
 function handleOverlayUpdate(id: string, visible: boolean) {
   overlayStates[id] = visible
+}
+
+function closePopup() {
+  popupInfo.value.visible = false
+}
+
+function handleClickOutside(e: MouseEvent) {
+  if (popupInfo.value.visible && popupRef.value && !popupRef.value.contains(e.target as Node)) {
+    closePopup()
+  }
 }
 
 onMounted(() => {
@@ -190,11 +218,23 @@ onMounted(() => {
             const layerResults = await queryAllLayers(cartesian, cartographic, click.position)
             
             if (layerResults.length > 0) {
-                console.log('Combined Layer Info:', layerResults)
+                // Position the popup near the click coordinates
+                popupInfo.value = {
+                    visible: true,
+                    x: click.position.x,
+                    y: click.position.y,
+                    results: layerResults
+                }
+            } else {
+                closePopup()
             }
+        } else {
+            closePopup()
         }
 
     }, ScreenSpaceEventType.LEFT_CLICK)
+
+    document.addEventListener('click', handleClickOutside)
 })
 
 onBeforeUnmount(() => {
@@ -205,6 +245,10 @@ onBeforeUnmount(() => {
   if (viewer.value) {
     viewer.value.destroy()
   }
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside)
 })
 
 watch(() => props.captures, (newCaptures) => {
