@@ -95,7 +95,10 @@ const unregister = registerLayer(async (cartesian: Cesium.Cartesian3) => {
 
     const classId = rasterData?.[0]?.[0]
 
-    if (classId === undefined || classId === null) return null
+    // Ignore invalid
+    if (classId === undefined || classId === null || Number.isNaN(classId) || classId === 0) {
+      return null
+    }
 
     const stringId = String(Math.round(Number(classId)))
     const label = mapBiomasLabels[stringId] || { es: `Clase ${stringId}`, en: `Class ${stringId}` }
