@@ -41,7 +41,6 @@
 </style>
 
 <script setup lang="ts">
-// @ts-ignore
 import '@/assets/css/map.css'
 import { onMounted, ref, onBeforeUnmount, watch } from 'vue'
 import { 
@@ -71,7 +70,6 @@ import {
   Ellipsoid,
   defined
 } from 'cesium'
-// @ts-ignore
 import 'cesium/Build/Cesium/Widgets/widgets.css'
 import ZoomControl from './mapControls/ZoomControl.vue'
 import NorthArrowControl from './mapControls/NorthArrowControl.vue'
@@ -192,7 +190,7 @@ onMounted(() => {
             const layerResults = await queryAllLayers(cartesian, cartographic, click.position)
             
             if (layerResults.length > 0) {
-            console.log('Combined Layer Info:', layerResults)
+                console.log('Combined Layer Info:', layerResults)
             }
         }
 

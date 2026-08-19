@@ -3,6 +3,11 @@ import { onMounted, watch, onUnmounted } from 'vue'
 import * as Cesium from 'cesium'
 import { fromUrl } from 'geotiff'
 import { useMapLayers } from '@/composables/useMapLayers'
+import { overlayLayers } from '@/scripts/map/overlays'
+
+const mapBiomasLayerMeta = overlayLayers.find(layer => layer.id === 'mapbiomas')
+
+const { t, locale } = useI18n()
 
 const props = withDefaults(defineProps<{
   viewer: Cesium.Viewer
@@ -27,7 +32,7 @@ function getTiffReader(url: string) {
   return tiffPromise
 }
 
-// 1. Localized labels
+// Localized labels
 const mapBiomasLabels: Record<string, { es: string; en: string }> = {
   '3': { es: '3. Bosque', en: '3. Forest' },
   '4': { es: '4. Sabana arbolada', en: '4. Wooded Savanna' },
@@ -57,7 +62,7 @@ const mapBiomasLabels: Record<string, { es: string; en: string }> = {
   '82': { es: '82. Vegetación herbácea y arbustiva andina inundable', en: '82. Flooded Andean Herbaceous and Shrub Vegetation' }
 }
 
-// 2. Register click query handler via composable against the S3 COG
+// Register click query handler via composable against the S3 COG
 const unregister = registerLayer(async (cartesian: Cesium.Cartesian3) => {
   if (!props.visible || !props.viewer || props.viewer.isDestroyed()) return null
 
@@ -103,11 +108,10 @@ const unregister = registerLayer(async (cartesian: Cesium.Cartesian3) => {
     const stringId = String(Math.round(Number(classId)))
     const label = mapBiomasLabels[stringId] || { es: `Clase ${stringId}`, en: `Class ${stringId}` }
 
-    console.log('MapBiomas Category:', label.es)
-
+    const currentLang = locale.value
     return {
-      title: 'MapBiomas Venezuela 2024',
-      content: label.es
+      title: mapBiomasLayerMeta ? t(mapBiomasLayerMeta.nameKey) : 'MapBiomas 2024',
+      content: label[currentLang]
     }
   } catch (err) {
     console.error('Error querying S3 COG pixel:', err)
