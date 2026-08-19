@@ -95,14 +95,14 @@ function switchBasemap(index: number) {
   if (!props.viewer || props.viewer.isDestroyed()) return
   const layers = props.viewer.imageryLayers
 
-  while (layers.length > 0) {
+  if (layers.length > 0) {
     layers.remove(layers.get(0), true)
   }
 
   const basemap = imageryProviders[index]
   if (basemap && basemap.providers) {
-    basemap.providers.forEach(providerFn => {
-      layers.add(providerFn())
+    basemap.providers.forEach((providerFn, i) => {
+      layers.add(providerFn(), i)
     })
   }
 }
