@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, watch, onUnmounted } from 'vue'
 import * as Cesium from 'cesium'
-import TIFFImageryProvider from 'tiff-imagery-provider'
+import { fromUrl } from 'geotiff'
 import { useMapLayers } from '@/composables/useMapLayers'
 
 const props = withDefaults(defineProps<{
@@ -14,10 +14,18 @@ const props = withDefaults(defineProps<{
 
 const { registerLayer } = useMapLayers()
 let imageryLayer: Cesium.ImageryLayer | null = null
-let tiffProvider: TIFFImageryProvider | null = null
-let handler: Cesium.ScreenSpaceEventHandler | null = null
+let tiffPromise: Promise<any> | null = null
 
 const COG_URL = 'https://ecocaptura-rasters.s3.us-east-2.amazonaws.com/MapBiomas_Venezuela_2024_cog.tif'
+const ION_ASSET_ID = 5142266
+
+// Helper to initialize and reuse the S3 COG connection
+function getTiffReader(url: string) {
+  if (!tiffPromise) {
+    tiffPromise = fromUrl(url)
+  }
+  return tiffPromise
+}
 
 // 1. Localized labels
 const mapBiomasLabels: Record<string, { es: string; en: string }> = {
@@ -49,63 +57,27 @@ const mapBiomasLabels: Record<string, { es: string; en: string }> = {
   '82': { es: '82. Vegetación herbácea y arbustiva andina inundable', en: '82. Flooded Andean Herbaceous and Shrub Vegetation' }
 }
 
-// 2. Palette matching array
-const colorPalette = [
-  { r: 31,  g: 141, b: 73,  classId: '3' },
-  { r: 125, g: 201, b: 117, classId: '4' },
-  { r: 4,   g: 56,  b: 29,  classId: '5' },
-  { r: 2,   g: 105, b: 117, classId: '6' },
-  { r: 122, g: 89,  b: 0,   classId: '9' },
-  { r: 81,  g: 151, b: 153, classId: '11' },
-  { r: 184, g: 175, b: 79,  classId: '12' },
-  { r: 216, g: 159, b: 92,  classId: '13' },
-  { r: 237, g: 222, b: 142, classId: '15' },
-  { r: 233, g: 116, b: 237, classId: '18' },
-  { r: 255, g: 239, b: 195, classId: '21' },
-  { r: 255, g: 160, b: 122, classId: '23' },
-  { r: 212, g: 39,  b: 30,  classId: '24' },
-  { r: 219, g: 77,  b: 79,  classId: '25' },
-  { r: 213, g: 213, b: 229, classId: '27' },
-  { r: 255, g: 170, b: 95,  classId: '29' },
-  { r: 156, g: 0,   b: 39,  classId: '30' },
-  { r: 9,   g: 16,  b: 119, classId: '31' },
-  { r: 252, g: 129, b: 20,  classId: '32' },
-  { r: 37,  g: 50,  b: 228, classId: '33' },
-  { r: 147, g: 223, b: 230, classId: '34' },
-  { r: 173, g: 81,  b: 0,   classId: '50' },
-  { r: 168, g: 147, b: 88,  classId: '66' },
-  { r: 233, g: 122, b: 122, classId: '68' },
-  { r: 223, g: 235, b: 98,  classId: '81' },
-  { r: 111, g: 193, b: 121, classId: '82' }
-]
-
-// 3. Register click query handler via composable
+// 2. Register click query handler via composable against the S3 COG
 const unregister = registerLayer(async (cartesian: Cesium.Cartesian3) => {
-  if (!props.visible || !props.viewer || props.viewer.isDestroyed() || !tiffProvider) return null
+  if (!props.visible || !props.viewer || props.viewer.isDestroyed()) return null
 
-  console.log('clicked')
+  console.log('clicked (hybrid Ion + S3 COG query)')
 
   try {
     const cartographic = Cesium.Cartographic.fromCartesian(cartesian)
     const lon = Cesium.Math.toDegrees(cartographic.longitude)
     const lat = Cesium.Math.toDegrees(cartographic.latitude)
 
-    const bbox = (tiffProvider as any).bbox // [minX, minY, maxX, maxY]
-    const images = (tiffProvider as any)._images
+    const tiff = await getTiffReader(COG_URL)
+    const image = await tiff.getImage()
 
-    if (!bbox || !images || images.length === 0) {
-      console.warn('Provider bbox or _images not available.')
+    const bbox = image.getBoundingBox() // [minX, minY, maxX, maxY]
+    if (!bbox || lon < bbox[0] || lon > bbox[2] || lat < bbox[1] || lat > bbox[3]) {
       return null
     }
 
-    // Check bounds
-    if (lon < bbox[0] || lon > bbox[2] || lat < bbox[1] || lat > bbox[3]) {
-      return null
-    }
-
-    const tiffImage = images[0]
-    const width = tiffImage.getWidth ? tiffImage.getWidth() : tiffImage.width
-    const height = tiffImage.getHeight ? tiffImage.getHeight() : tiffImage.height
+    const width = image.getWidth()
+    const height = image.getHeight()
 
     // Map lon/lat to pixel coordinates
     const xFrac = (lon - bbox[0]) / (bbox[2] - bbox[0])
@@ -116,8 +88,8 @@ const unregister = registerLayer(async (cartesian: Cesium.Cartesian3) => {
 
     if (px < 0 || px >= width || py < 0 || py >= height) return null
 
-    // Read single pixel window from the internal image
-    const rasterData = await tiffImage.readRasters({
+    // Read single pixel window directly from S3 COG via range request
+    const rasterData = await image.readRasters({
       window: [px, py, px + 1, py + 1]
     })
 
@@ -135,7 +107,7 @@ const unregister = registerLayer(async (cartesian: Cesium.Cartesian3) => {
       content: label.es
     }
   } catch (err) {
-    console.error('Error identifying TIFF value at position:', err)
+    console.error('Error querying S3 COG pixel:', err)
     return null
   }
 })
@@ -144,31 +116,15 @@ onMounted(async () => {
   if (!props.viewer || props.viewer.isDestroyed()) return
 
   try {
-    tiffProvider = await TIFFImageryProvider.fromUrl(COG_URL, {
-      renderOptions: {
-        single: {
-          type: 'discrete',
-          useRealValue: true,
-          domain: [3, 82],
-          colors: colorPalette.map(c => [Number(c.classId), `rgb(${c.r}, ${c.g}, ${c.b})`] as [number, string])
-        }
-      }
-    })
-
-    console.log('TIFF Provider keys:', Object.keys(tiffProvider), Object.getOwnPropertyNames(Object.getPrototypeOf(tiffProvider)));
-
-    imageryLayer = Cesium.ImageryLayer.fromProviderAsync(
-      Promise.resolve(tiffProvider as unknown as Cesium.ImageryProvider)
-    )
-    
-    props.viewer.imageryLayers.add(imageryLayer)
+    const provider = await Cesium.IonImageryProvider.fromAssetId(ION_ASSET_ID)
+    imageryLayer = props.viewer.imageryLayers.addImageryProvider(provider)
     imageryLayer.show = props.visible
 
-    if (props.autoZoom && tiffProvider.rectangle) {
-      props.viewer.camera.flyTo({ destination: tiffProvider.rectangle })
+    if (props.autoZoom && provider.rectangle) {
+      props.viewer.camera.flyTo({ destination: provider.rectangle })
     }
   } catch (error) {
-    console.error('Failed to initialize MapBiomas TIFFImageryProvider:', error)
+    console.error('Failed to initialize Cesium Ion Imagery Provider:', error)
   }
 })
 
