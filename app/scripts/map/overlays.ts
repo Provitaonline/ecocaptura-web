@@ -18,7 +18,7 @@ export const overlayLayers = [
     id: 'states',
     nameKey: 'map.overlays.states',
     defaultVisible: false,
-    url: 'https://geoportalp-files.s3-us-east-2.amazonaws.com/vtiles/limites_estadales_de_venezuela_igvsb_wgs84/{z}/{x}/{y}.pbf',
-    type: 'mvt'
+    url: '/data/states.topojson',
+    type: 'topojson'
   }
 ]
