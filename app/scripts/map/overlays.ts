@@ -19,6 +19,7 @@ export const overlayLayers = [
     nameKey: 'map.overlays.states',
     defaultVisible: false,
     url: '/data/states.topojson',
+    attribute: 'NAM',
     type: 'topojson'
   }
 ]
