@@ -130,7 +130,6 @@ const overlayStates = reactive<Record<string, boolean>>(
 )
 
 function handleOverlayUpdate(id: string, visible: boolean) {
-  console.log('Parent received overlay update:', id, visible)
   overlayStates[id] = visible
 }
 

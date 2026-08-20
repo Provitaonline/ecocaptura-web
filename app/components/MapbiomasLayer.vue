@@ -63,9 +63,12 @@ const mapBiomasLabels: Record<string, { es: string; en: string }> = {
 const unregister = registerLayer(async (cartesian: Cesium.Cartesian3) => {
   if (!props.visible || !props.viewer || props.viewer.isDestroyed()) return null
 
-  console.log('clicked (hybrid Ion + S3 COG query)')
+  // Directly override the canvas element's inline cursor style
+  const canvas = props.viewer.canvas
+  canvas.style.cursor = 'progress'
 
   try {
+
     const cartographic = Cesium.Cartographic.fromCartesian(cartesian)
     const lon = Cesium.Math.toDegrees(cartographic.longitude)
     const lat = Cesium.Math.toDegrees(cartographic.latitude)
@@ -113,6 +116,9 @@ const unregister = registerLayer(async (cartesian: Cesium.Cartesian3) => {
   } catch (err) {
     console.error('Error querying S3 COG pixel:', err)
     return null
+  } finally {
+    // Clear the inline style so Cesium takes back normal cursor management
+    canvas.style.cursor = ''
   }
 })
 
