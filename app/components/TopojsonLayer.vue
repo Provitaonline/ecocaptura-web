@@ -68,30 +68,34 @@ onMounted(async () => {
   }
 
   // Load the TopoJSON data source asynchronously
+  const layerColor = layerMeta.color 
+    ? Cesium.Color.fromCssColorString(layerMeta.color) 
+    : Cesium.Color.CYAN;
+
   try {
     const dataSource = await Cesium.GeoJsonDataSource.load(layerMeta.url, {
       clampToGround: true,
-      fill: Cesium.Color.CYAN.withAlpha(0.01),
+      fill: layerColor.withAlpha(0.01),
       stroke: undefined
     })
 
     dataSource.entities.values.forEach((entity) => {
-		if (entity.polygon && entity.polygon.hierarchy) {
-			entity.polygon.outline = undefined as any
+        if (entity.polygon && entity.polygon.hierarchy) {
+            entity.polygon.outline = undefined as any
 
-			const hierarchy = entity.polygon.hierarchy.getValue(Cesium.JulianDate.now())
-			if (hierarchy && hierarchy.positions) {
-				dataSource.entities.add({
-				properties: entity.properties,
-				polyline: {
-					positions: hierarchy.positions,
-					width: 1,
-					material: Cesium.Color.CYAN,
-					clampToGround: true
-				}
-				})
-			}
-		}
+            const hierarchy = entity.polygon.hierarchy.getValue(Cesium.JulianDate.now())
+            if (hierarchy && hierarchy.positions) {
+                dataSource.entities.add({
+                properties: entity.properties,
+                polyline: {
+                    positions: hierarchy.positions,
+                    width: 1,
+                    material: layerColor,
+                    clampToGround: true
+                }
+                })
+            }
+        }
     })
 
     if (props.viewer.isDestroyed()) return

@@ -20,6 +20,7 @@ export const overlayLayers = [
     defaultVisible: false,
     url: '/data/states.topojson',
     attribute: 'NAM',
+    color: '#00FFFF',
     type: 'topojson'
   },
   {
@@ -28,6 +29,7 @@ export const overlayLayers = [
     defaultVisible: false,
     url: '/data/protected-areas.topojson',
     attribute: 'nombre',
+    color: '#CBC3E3',
     type: 'topojson'
   }
 ]
