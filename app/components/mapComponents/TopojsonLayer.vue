@@ -72,6 +72,8 @@ onMounted(async () => {
     ? Cesium.Color.fromCssColorString(layerMeta.color) 
     : Cesium.Color.CYAN;
 
+  console.log('layer color', layerMeta, layerColor)
+
   try {
     const dataSource = await Cesium.GeoJsonDataSource.load(layerMeta.url, {
       clampToGround: true,

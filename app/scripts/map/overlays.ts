@@ -1,9 +1,11 @@
 export const overlayLayers = [
   {
     id: 'aoi',
-	  nameKey: 'map.overlays.aoi',
-    defaultVisible: false,
-    type: "geojson"
+    nameKey: 'map.overlays.aoi',
+    defaultVisible: true,
+    url: '/data/venezuela.topojson',
+    color: '#FFA500',
+    type: 'topojson'
   },
   {
     id: 'mapbiomas',
