@@ -6,6 +6,7 @@
 
         <AreaOfInterestBoundary :autoZoom="false" :viewer="viewer" :visible="overlayStates['aoi'] ?? true" v-if="viewer"/>
 		<MapbiomasLayer :autoZoom="false" :viewer="viewer" :visible="overlayStates['mapbiomas'] ?? true" v-if="viewer"/>
+        <MVTTilesetLayer :viewer="viewer" nameKey="map.overlays.states" :visible="overlayStates['states'] ?? true" v-if="viewer"/>
 
         <div class="map-top map-right" v-if="viewer">
             <NorthArrowControl :viewer="viewer" />
@@ -85,6 +86,7 @@ import NorthArrowControl from './mapControls/NorthArrowControl.vue'
 import LookDownControl from './mapControls/LookDownControl.vue'
 import AreaOfInterestBoundary from './AreaOfInterestBoundary.vue'
 import MapbiomasLayer from './MapbiomasLayer.vue'
+import Cesium3DTilesetLayer from './Cesium3DTilesetLayer.vue'
 import LayerControl from './mapControls/LayerControl.vue'
 import ResetViewControl from './mapControls/ResetViewControl.vue'
 import { MAP_CONFIG } from '@/scripts/config'
@@ -128,6 +130,7 @@ const overlayStates = reactive<Record<string, boolean>>(
 )
 
 function handleOverlayUpdate(id: string, visible: boolean) {
+  console.log('Parent received overlay update:', id, visible)
   overlayStates[id] = visible
 }
 

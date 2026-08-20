@@ -21,9 +21,6 @@ const { registerLayer } = useMapLayers()
 let imageryLayer: Cesium.ImageryLayer | null = null
 let tiffPromise: Promise<any> | null = null
 
-const COG_URL = 'https://ecocaptura-rasters.s3.us-east-2.amazonaws.com/MapBiomas_Venezuela_2024_cog.tif'
-const ION_ASSET_ID = 5142266
-
 // Helper to initialize and reuse the S3 COG connection
 function getTiffReader(url: string) {
   if (!tiffPromise) {
@@ -73,7 +70,7 @@ const unregister = registerLayer(async (cartesian: Cesium.Cartesian3) => {
     const lon = Cesium.Math.toDegrees(cartographic.longitude)
     const lat = Cesium.Math.toDegrees(cartographic.latitude)
 
-    const tiff = await getTiffReader(COG_URL)
+    const tiff = await getTiffReader(mapBiomasLayerMeta!.cogUrl!)
     const image = await tiff.getImage()
 
     const bbox = image.getBoundingBox() // [minX, minY, maxX, maxY]
@@ -123,7 +120,7 @@ onMounted(async () => {
   if (!props.viewer || props.viewer.isDestroyed()) return
 
   try {
-    const provider = await Cesium.IonImageryProvider.fromAssetId(ION_ASSET_ID)
+    const provider = await Cesium.IonImageryProvider.fromAssetId(mapBiomasLayerMeta!.ionAssetId!)
     imageryLayer = props.viewer.imageryLayers.addImageryProvider(provider)
     imageryLayer.show = props.visible
 

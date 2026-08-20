@@ -113,9 +113,13 @@ function handleBasemapClick(index: number) {
   isExpanded.value = false
 }
 
-function handleOverlayClick(layer: typeof overlayState.value[number]) {
+function handleOverlayClick(targetLayer: typeof overlayState.value[number]) {
+  const layer = overlayState.value.find(l => l.id === targetLayer.id)
+  if (!layer) return
+
   layer.visible = !layer.visible
   if (!props.viewer || props.viewer.isDestroyed()) return
+  
   emit('update:overlay', layer.id, layer.visible)
 }
 
