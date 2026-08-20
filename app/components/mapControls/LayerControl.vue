@@ -121,6 +121,7 @@ function handleOverlayClick(targetLayer: typeof overlayState.value[number]) {
   if (!props.viewer || props.viewer.isDestroyed()) return
   
   emit('update:overlay', layer.id, layer.visible)
+  props.viewer.scene.requestRender()
 }
 
 function toggleDropdown(e: MouseEvent) {
