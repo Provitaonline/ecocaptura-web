@@ -160,7 +160,9 @@ onMounted(() => {
         scene3DOnly: true,
         terrain: Terrain.fromWorldTerrain(),
         // @ts-ignore
-        terrainExaggeration: 2
+        terrainExaggeration: 2,
+        requestRenderMode: true,
+        maximumRenderTimeChange: Infinity
     })
 
     viewer.value.scene.globe.depthTestAgainstTerrain = true
