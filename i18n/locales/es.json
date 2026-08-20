@@ -24,8 +24,8 @@
     "overlays": {
       "aoi": "Límites",
       "mapbiomas": "Mapbiomas 2024",
-      "stateBoundaries": "Límites estadales",
-      "states": "Estados"
+      "states": "Estados",
+      "anp": "Áreas protegidas"
     },
     "basemaps": {
       "mwi": "Capa de imágenes de Bing",

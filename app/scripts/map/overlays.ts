@@ -21,5 +21,13 @@ export const overlayLayers = [
     url: '/data/states.topojson',
     attribute: 'NAM',
     type: 'topojson'
+  },
+  {
+    id: 'anp',
+    nameKey: 'map.overlays.anp',
+    defaultVisible: false,
+    url: '/data/protected-areas.topojson',
+    attribute: 'nombre',
+    type: 'topojson'
   }
 ]

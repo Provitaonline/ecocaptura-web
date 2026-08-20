@@ -85,7 +85,7 @@ onMounted(async () => {
 				properties: entity.properties,
 				polyline: {
 					positions: hierarchy.positions,
-					width: 2,
+					width: 1,
 					material: Cesium.Color.CYAN,
 					clampToGround: true
 				}
