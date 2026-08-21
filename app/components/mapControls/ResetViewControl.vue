@@ -8,7 +8,7 @@
 
 <script setup lang="ts">
 import * as Cesium from 'cesium'
-import { MAP_CONFIG } from '@/scripts/config'
+import { mapConfig } from '@/scripts/config'
 
 const props = defineProps<{
   viewer: Cesium.Viewer
@@ -20,11 +20,11 @@ const resetView = () => {
 
   viewer.camera.flyTo({
 	destination: Cesium.Cartesian3.fromDegrees(
-		MAP_CONFIG.defaultView.destination.longitude,
-		MAP_CONFIG.defaultView.destination.latitude,
-		MAP_CONFIG.defaultView.destination.height
+		mapConfig.defaultView.destination.longitude,
+		mapConfig.defaultView.destination.latitude,
+		mapConfig.defaultView.destination.height
 	),
-    orientation: MAP_CONFIG.defaultView.orientation,
+    orientation: mapConfig.defaultView.orientation,
     duration: 1.5
   })
 }

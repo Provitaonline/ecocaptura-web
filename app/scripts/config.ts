@@ -1,5 +1,4 @@
-export const MAP_CONFIG = {
-	areaOfInterestBoundaryFile: '/data/venezuela-e-l.topojson',
+export const mapConfig = {
 	defaultView: {
 		destination: {
 			longitude: -64.7827,

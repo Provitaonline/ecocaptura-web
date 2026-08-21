@@ -88,7 +88,7 @@ import MapbiomasLayer from './mapComponents/MapbiomasLayer.vue'
 import TopojsonLayer from './mapComponents/TopojsonLayer.vue'
 import LayerControl from './mapControls/LayerControl.vue'
 import ResetViewControl from './mapControls/ResetViewControl.vue'
-import { MAP_CONFIG } from '@/scripts/config'
+import { mapConfig } from '@/scripts/config'
 import { reactive } from 'vue'
 import { overlayLayers } from '@/scripts/map/overlays'
 import MapPopup from './mapComponents/MapPopup.vue'
@@ -167,11 +167,11 @@ onMounted(() => {
 
     viewer.value.camera.setView({
         destination: Cartesian3.fromDegrees(
-            MAP_CONFIG.defaultView.destination.longitude,
-            MAP_CONFIG.defaultView.destination.latitude,
-            MAP_CONFIG.defaultView.destination.height
+            mapConfig.defaultView.destination.longitude,
+            mapConfig.defaultView.destination.latitude,
+            mapConfig.defaultView.destination.height
         ),
-        orientation: MAP_CONFIG.defaultView.orientation
+        orientation: mapConfig.defaultView.orientation
     })
 
     ;(window as any).viewer = viewer.value
@@ -428,7 +428,7 @@ function handlePhotoEntities(payload: { captureId: string; enabled: boolean; pho
                             id: `photo_${captureId}_${photo.photoId}`,
                             position: position,
                             billboard: {
-                                image: MAP_CONFIG.icons.photoMarker,
+                                image: mapConfig.icons.photoMarker,
                                 scale: 1.0,
                                 heightReference: HeightReference.NONE, 
                                 verticalOrigin: VerticalOrigin.BOTTOM
