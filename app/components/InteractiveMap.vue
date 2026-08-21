@@ -17,14 +17,7 @@
             <LayerControl :viewer="viewer" @update:overlay="handleOverlayUpdate" />
         </div>
 
-        <MapPopup
-            ref="popupRef"
-            v-if="popupInfo.visible"
-            :x="popupInfo.x"
-            :y="popupInfo.y"
-            :results="popupInfo.results"
-            @close="closePopup"
-        />
+        <MapPopup ref="popupRef" v-if="popupInfo.visible" :x="popupInfo.x" :y="popupInfo.y" :results="popupInfo.results" @close="closePopup"/>
 
     </div>
   </div>
@@ -412,7 +405,7 @@ function handlePhotoEntities(payload: { captureId: string; enabled: boolean; pho
                                         polyline: {
                                             positions: outlinePositions,
                                             width: 2.0,
-                                            material: Color.fromCssColorString('#3273dc').withAlpha(0.6),
+                                            material: Color.fromCssColorString(mapConfig.colors.accuracyCircleColor).withAlpha(0.6),
                                             clampToGround: true
                                         },
                                         properties: { photoId: photo.photoId, captureId }
@@ -463,7 +456,7 @@ function handlePhotoEntities(payload: { captureId: string; enabled: boolean; pho
                                 polyline: {
                                     positions: [leftWing, tipCartesian, rightWing],
                                     width: 3.0,
-                                    material: Color.fromCssColorString('#3273dc'),
+                                    material: Color.fromCssColorString(mapConfig.colors.headingArrowColor),
                                     clampToGround: true
                                 },
                                 properties: { photoId: photo.photoId, captureId }
@@ -502,7 +495,7 @@ function handlePhotoEntities(payload: { captureId: string; enabled: boolean; pho
                                     geometry: frustumGeometry,
                                     attributes: {
                                         color: ColorGeometryInstanceAttribute.fromColor(
-                                            Color.fromCssColorString('#3273dc').withAlpha(0.25)
+                                            Color.fromCssColorString(mapConfig.colors.cameraFrustumColor).withAlpha(0.25)
                                         )
                                     }
                                 }),
