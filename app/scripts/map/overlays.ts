@@ -3,9 +3,9 @@ export const overlayLayers = [
     id: 'aoi',
     nameKey: 'map.overlays.aoi',
     defaultVisible: true,
-    url: '/data/venezuela.json',
+    url: '/data/aoi.json',
     color: '#FFA500',
-    type: 'topojson'
+    type: 'prebaked'
   },
   {
     id: 'mapbiomas',

@@ -4,7 +4,7 @@
       
         <div id="cesiumContainer"></div>
 
-        <TopojsonLayer :viewer="viewer" nameKey="map.overlays.aoi" :visible="overlayStates['aoi'] ?? true" v-if="viewer"/>
+        <AreaOfInterestLayer :viewer="viewer" nameKey="map.overlays.aoi" :visible="overlayStates['aoi'] ?? true" v-if="viewer"/>
 		<MapbiomasLayer :autoZoom="false" :viewer="viewer" :visible="overlayStates['mapbiomas'] ?? true" v-if="viewer"/>
         <TopojsonLayer :viewer="viewer" nameKey="map.overlays.states" :visible="overlayStates['states'] ?? true" v-if="viewer"/>
         <TopojsonLayer :viewer="viewer" nameKey="map.overlays.anp" :visible="overlayStates['anp'] ?? true" v-if="viewer"/>
@@ -77,6 +77,7 @@ import 'cesium/Build/Cesium/Widgets/widgets.css'
 import ZoomControl from './mapControls/ZoomControl.vue'
 import NorthArrowControl from './mapControls/NorthArrowControl.vue'
 import LookDownControl from './mapControls/LookDownControl.vue'
+import AreaOfInterestLayer from './mapComponents/AreaOfInterestLayer.vue'
 import MapbiomasLayer from './mapComponents/MapbiomasLayer.vue'
 import TopojsonLayer from './mapComponents/TopojsonLayer.vue'
 import LayerControl from './mapControls/LayerControl.vue'

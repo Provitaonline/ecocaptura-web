@@ -79,24 +79,38 @@ onMounted(async () => {
       stroke: undefined
     })
 
+	const allLines: number[][] = [] // temporary collector
+
     dataSource.entities.values.forEach((entity) => {
         if (entity.polygon && entity.polygon.hierarchy) {
             entity.polygon.outline = undefined as any
 
             const hierarchy = entity.polygon.hierarchy.getValue(Cesium.JulianDate.now())
             if (hierarchy && hierarchy.positions) {
-                dataSource.entities.add({
-                properties: entity.properties,
-                polyline: {
-                    positions: hierarchy.positions,
-                    width: 1,
-                    material: layerColor,
-                    clampToGround: true
+                
+                // --- ADD THIS TEMPORARY CAPTURE ---
+                const flat: number[] = []
+                for (const p of hierarchy.positions) {
+                    flat.push(p.x, p.y, p.z)
                 }
+                allLines.push(flat)
+                // ----------------------------------
+
+                dataSource.entities.add({
+                    properties: entity.properties,
+                    polyline: {
+                        positions: hierarchy.positions,
+                        width: 1,
+                        material: layerColor,
+                        clampToGround: true
+                    }
                 })
             }
         }
     })
+
+    // --- PRINT IT ONCE TO YOUR TERMINAL/CONSOLE ---
+    console.log("PREBAKED_BORDERS: ", props.nameKey,  JSON.stringify(allLines))
 
     if (props.viewer.isDestroyed()) return
 
