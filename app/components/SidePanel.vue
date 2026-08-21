@@ -294,17 +294,9 @@ const fetchCaptureDetailsIfNeeded = async (captureId: string) => {
   }
 }
 
-// Handle everything needed when a card opens
 const handleCardOpened = async (item: Capture) => {
   if (item.centroidCoordinates) {
     emit('select-capture', item)
-    const parts = item.centroidCoordinates.split(',').map(Number)
-    const lat = parts[0]
-    const lng = parts[1]
-
-    if (lat !== undefined && lng !== undefined && !isNaN(lat) && !isNaN(lng)) {
-      console.log(`Centering map at: Lat ${lat}, Lng ${lng}`)
-    }
   }
 
   await fetchCaptureDetailsIfNeeded(item.captureId)
