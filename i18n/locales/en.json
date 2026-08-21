@@ -22,7 +22,9 @@
   "map": {
     "overlays": {
       "aoi": "Border",
-      "mapbiomas": "Mapbiomas 2024"
+      "mapbiomas": "Mapbiomas 2024",
+      "states": "States",
+      "anp": "Protected areas"
     },
     "basemaps": {
       "mwi": "Microsoft World Imagery",

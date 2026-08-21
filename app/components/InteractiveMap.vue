@@ -4,8 +4,10 @@
       
         <div id="cesiumContainer"></div>
 
-        <AreaOfInterestBoundary :autoZoom="false" :viewer="viewer" :visible="overlayStates['aoi'] ?? true" v-if="viewer"/>
+        <TopojsonLayer :viewer="viewer" nameKey="map.overlays.aoi" :visible="overlayStates['aoi'] ?? true" v-if="viewer"/>
 		<MapbiomasLayer :autoZoom="false" :viewer="viewer" :visible="overlayStates['mapbiomas'] ?? true" v-if="viewer"/>
+        <TopojsonLayer :viewer="viewer" nameKey="map.overlays.states" :visible="overlayStates['states'] ?? true" v-if="viewer"/>
+        <TopojsonLayer :viewer="viewer" nameKey="map.overlays.anp" :visible="overlayStates['anp'] ?? true" v-if="viewer"/>
 
         <div class="map-top map-right" v-if="viewer">
             <NorthArrowControl :viewer="viewer" />
@@ -13,7 +15,6 @@
             <LookDownControl :viewer="viewer" />
             <ResetViewControl :viewer="viewer" />
             <LayerControl :viewer="viewer" @update:overlay="handleOverlayUpdate" />
-            <ResetViewControl :viewer="viewer" />
         </div>
 
         <MapPopup
@@ -83,14 +84,14 @@ import 'cesium/Build/Cesium/Widgets/widgets.css'
 import ZoomControl from './mapControls/ZoomControl.vue'
 import NorthArrowControl from './mapControls/NorthArrowControl.vue'
 import LookDownControl from './mapControls/LookDownControl.vue'
-import AreaOfInterestBoundary from './AreaOfInterestBoundary.vue'
-import MapbiomasLayer from './MapbiomasLayer.vue'
+import MapbiomasLayer from './mapComponents/MapbiomasLayer.vue'
+import TopojsonLayer from './mapComponents/TopojsonLayer.vue'
 import LayerControl from './mapControls/LayerControl.vue'
 import ResetViewControl from './mapControls/ResetViewControl.vue'
 import { MAP_CONFIG } from '@/scripts/config'
 import { reactive } from 'vue'
 import { overlayLayers } from '@/scripts/map/overlays'
-import MapPopup from './MapPopup.vue'
+import MapPopup from './mapComponents/MapPopup.vue'
 
 declare global {
   interface Window {
@@ -157,7 +158,9 @@ onMounted(() => {
         scene3DOnly: true,
         terrain: Terrain.fromWorldTerrain(),
         // @ts-ignore
-        terrainExaggeration: 2
+        terrainExaggeration: 2,
+        requestRenderMode: true,
+        maximumRenderTimeChange: Infinity
     })
 
     viewer.value.scene.globe.depthTestAgainstTerrain = true
@@ -327,6 +330,9 @@ function handlePhotoEntities(payload: { captureId: string; enabled: boolean; pho
     }
     primitivesToRemove.forEach(p => primitiveCollection.remove(p))
 
+    // Request a render immediately after clearing items out
+    viewer.value.scene.requestRender()
+
     // GUARD: If toggle is disabled, stop here after clearing everything out
     if (!enabled) return
 
@@ -368,50 +374,50 @@ function handlePhotoEntities(payload: { captureId: string; enabled: boolean; pho
 
                         const position = Ellipsoid.WGS84.cartographicToCartesian(cartographic)
 
-                        // 1. Add Accuracy Circle via Polyline
-						const accuracyRadius = photo.gpsAccuracy ?? 10.0
-						try {
-							const pointsCount = 32
-							const finalPositions: Cartesian3[] = []
-							const transform = Transforms.eastNorthUpToFixedFrame(position)
+                        // Add Accuracy Circle via Polyline
+                        const accuracyRadius = photo.gpsAccuracy ?? 10.0
+                        try {
+                            const pointsCount = 32
+                            const finalPositions: Cartesian3[] = []
+                            const transform = Transforms.eastNorthUpToFixedFrame(position)
 
-							for (let i = 0; i < pointsCount; i++) {
-								const angle = (i / pointsCount) * (2 * Math.PI)
-								const dx = accuracyRadius * Math.cos(angle)
-								const dy = accuracyRadius * Math.sin(angle)
-								
-								const pt = Matrix4.multiplyByPoint(
-									transform, 
-									new Cartesian3(dx, dy, 0.2), 
-									new Cartesian3()
-								)
-								if (pt) {
-									finalPositions.push(pt as Cartesian3)
-								}
-							}
+                            for (let i = 0; i < pointsCount; i++) {
+                                const angle = (i / pointsCount) * (2 * Math.PI)
+                                const dx = accuracyRadius * Math.cos(angle)
+                                const dy = accuracyRadius * Math.sin(angle)
+                                
+                                const pt = Matrix4.multiplyByPoint(
+                                    transform, 
+                                    new Cartesian3(dx, dy, 0.2), 
+                                    new Cartesian3()
+                                )
+                                if (pt) {
+                                    finalPositions.push(pt as Cartesian3)
+                                }
+                            }
 
-							if (finalPositions.length > 0) {
-								const firstPoint = finalPositions[0]
-								if (firstPoint) {
-									const outlinePositions: Cartesian3[] = [...finalPositions, firstPoint]
-									
-									entityCollection.add({
-										id: `photo_accuracy_${captureId}_${photo.photoId}`,
-										polyline: {
-											positions: outlinePositions,
-											width: 2.0,
-											material: Color.fromCssColorString('#3273dc').withAlpha(0.6),
-											clampToGround: true
-										},
-										properties: { photoId: photo.photoId, captureId }
-									})
-								}
-							}
-						} catch (err) {
-							console.error('Failed to create GPS accuracy circle:', err)
-						}
+                            if (finalPositions.length > 0) {
+                                const firstPoint = finalPositions[0]
+                                if (firstPoint) {
+                                    const outlinePositions: Cartesian3[] = [...finalPositions, firstPoint]
+                                    
+                                    entityCollection.add({
+                                        id: `photo_accuracy_${captureId}_${photo.photoId}`,
+                                        polyline: {
+                                            positions: outlinePositions,
+                                            width: 2.0,
+                                            material: Color.fromCssColorString('#3273dc').withAlpha(0.6),
+                                            clampToGround: true
+                                        },
+                                        properties: { photoId: photo.photoId, captureId }
+                                    })
+                                }
+                            }
+                        } catch (err) {
+                            console.error('Failed to create GPS accuracy circle:', err)
+                        }
 
-                        // 2. Add Photo Marker Billboard
+                        // Add Photo Marker Billboard
                         entityCollection.add({
                             id: `photo_${captureId}_${photo.photoId}`,
                             position: position,
@@ -424,7 +430,7 @@ function handlePhotoEntities(payload: { captureId: string; enabled: boolean; pho
                             properties: { photoId: photo.photoId, captureId }
                         })
 
-                        // 3. Add Ground Polyline Arrow pointing along heading vector
+                        // Add Ground Polyline Arrow pointing along heading vector
                         const headingDegrees = photo.heading ?? 0
                         const headingRad = CesiumMath.toRadians(headingDegrees)
                         try {
@@ -460,7 +466,7 @@ function handlePhotoEntities(payload: { captureId: string; enabled: boolean; pho
                             console.error('Failed to create ground polyline arrow:', err)
                         }
 
-                        // 4. Add 3D Camera Frustum Pyramid Primitive
+                        // Add 3D Camera Frustum Pyramid Primitive
                         try {
                             const heading = CesiumMath.toRadians(photo.heading ?? 0) - (Math.PI / 2)
                             const rawTilt = photo.tiltY ?? 0
@@ -507,6 +513,11 @@ function handlePhotoEntities(payload: { captureId: string; enabled: boolean; pho
                             console.error('Failed to construct photo FOV frustum geometry:', err)
                         }
                     })
+
+                    // Request a render once all asynchronous batch additions are complete
+                    if (viewer.value && !viewer.value.isDestroyed()) {
+                        viewer.value.scene.requestRender()
+                    }
                 })
                 .catch(err => {
                     console.error('Failed to sample terrain heights for photos:', err)

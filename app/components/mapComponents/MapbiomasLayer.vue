@@ -21,9 +21,6 @@ const { registerLayer } = useMapLayers()
 let imageryLayer: Cesium.ImageryLayer | null = null
 let tiffPromise: Promise<any> | null = null
 
-const COG_URL = 'https://ecocaptura-rasters.s3.us-east-2.amazonaws.com/MapBiomas_Venezuela_2024_cog.tif'
-const ION_ASSET_ID = 5142266
-
 // Helper to initialize and reuse the S3 COG connection
 function getTiffReader(url: string) {
   if (!tiffPromise) {
@@ -66,14 +63,17 @@ const mapBiomasLabels: Record<string, { es: string; en: string }> = {
 const unregister = registerLayer(async (cartesian: Cesium.Cartesian3) => {
   if (!props.visible || !props.viewer || props.viewer.isDestroyed()) return null
 
-  console.log('clicked (hybrid Ion + S3 COG query)')
+  // Directly override the canvas element's inline cursor style
+  const canvas = props.viewer.canvas
+  canvas.style.cursor = 'progress'
 
   try {
+
     const cartographic = Cesium.Cartographic.fromCartesian(cartesian)
     const lon = Cesium.Math.toDegrees(cartographic.longitude)
     const lat = Cesium.Math.toDegrees(cartographic.latitude)
 
-    const tiff = await getTiffReader(COG_URL)
+    const tiff = await getTiffReader(mapBiomasLayerMeta!.cogUrl!)
     const image = await tiff.getImage()
 
     const bbox = image.getBoundingBox() // [minX, minY, maxX, maxY]
@@ -116,6 +116,9 @@ const unregister = registerLayer(async (cartesian: Cesium.Cartesian3) => {
   } catch (err) {
     console.error('Error querying S3 COG pixel:', err)
     return null
+  } finally {
+    // Clear the inline style so Cesium takes back normal cursor management
+    canvas.style.cursor = ''
   }
 })
 
@@ -123,7 +126,7 @@ onMounted(async () => {
   if (!props.viewer || props.viewer.isDestroyed()) return
 
   try {
-    const provider = await Cesium.IonImageryProvider.fromAssetId(ION_ASSET_ID)
+    const provider = await Cesium.IonImageryProvider.fromAssetId(mapBiomasLayerMeta!.ionAssetId!)
     imageryLayer = props.viewer.imageryLayers.addImageryProvider(provider)
     imageryLayer.show = props.visible
 

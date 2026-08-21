@@ -391,10 +391,15 @@ const openCaptureById = async (captureId: string) => {
     await nextTick()
 
     const cardEl = cardRefs.value[captureId]
-    if (cardEl) {
-      cardEl.scrollIntoView({
-        behavior: 'smooth',
-        block: 'start' 
+    const containerEl = panelContainerRef.value
+
+    if (cardEl && containerEl) {
+      // Calculate the card's position relative to the scroll container
+      const topPos = cardEl.offsetTop - containerEl.offsetTop
+      
+      containerEl.scrollTo({
+        top: topPos,
+        behavior: 'smooth'
       })
     }
   }
