@@ -1,6 +1,6 @@
 <template>
   <div 
-	ref="rootRef"
+    ref="rootRef"
     class="map-popup" 
     :style="{ left: `${x}px`, top: `${y}px` }"
   >
@@ -23,9 +23,24 @@ defineProps<{
   results: Array<{ title: string; content: string }>
 }>()
 
-defineEmits<{
+const emit = defineEmits<{
   (e: 'close'): void
 }>()
+
+// ESC key handler
+function handleKeyDown(e: KeyboardEvent) {
+  if (e.key === 'Escape') {
+    emit('close')
+  }
+}
+
+onMounted(() => {
+  window.addEventListener('keydown', handleKeyDown)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', handleKeyDown)
+})
 
 defineExpose({
   contains: (node: Node) => rootRef.value?.contains(node)
