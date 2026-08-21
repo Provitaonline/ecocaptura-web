@@ -114,7 +114,7 @@ const emit = defineEmits<{
 }>()
 
 const popupRef = ref<HTMLElement | null>(null)
-const viewer = ref<Viewer | null>(null)
+const viewer = shallowRef<Viewer | null>(null)
 let handler: ScreenSpaceEventHandler | null = null
 
 const popupInfo = ref({
@@ -176,49 +176,32 @@ onMounted(() => {
 
     ;(window as any).viewer = viewer.value
 
-    requestAnimationFrame(() => {
-        if (!viewer.value || viewer.value.isDestroyed()) return
+    handler = new ScreenSpaceEventHandler(viewer.value.scene.canvas)
 
-        const localHandler = new ScreenSpaceEventHandler(viewer.value.scene.canvas)
-        handler = localHandler
+    if (viewer.value && !viewer.value.isDestroyed()) {
 
-        let ticking = false
-        
-        // MOUSE_MOVE handler throttled via requestAnimationFrame with safe try/catch
-        /*localHandler.setInputAction((movement: any) => {
-            if (ticking) return
-            ticking = true
-
-            requestAnimationFrame(() => {
-                ticking = false
-            })
-
+        handler.setInputAction((movement: any) => {
             const viewerInstance = viewer.value
             if (!viewerInstance || viewerInstance.isDestroyed()) return
 
-            try {
-                const pickedObject = viewerInstance.scene.pick(movement.endPosition)
-                const canvas = viewerInstance.scene.canvas
-                if (!canvas) return
+            const pickedObject = viewerInstance.scene.pick(movement.endPosition)
+            const canvas = viewerInstance.scene.canvas
+            if (!canvas) return
 
-                if (defined(pickedObject) && pickedObject.id?.properties) {
-                    const props = pickedObject.id.properties
-                    if (props.captureId || props.photoId) {
-                        canvas.style.cursor = 'pointer'
-                        return
-                    }
+            if (defined(pickedObject) && pickedObject.id?.properties) {
+                const props = pickedObject.id.properties
+                if (props.captureId || props.photoId) {
+                    canvas.style.cursor = 'pointer'
+                    return
                 }
-                canvas.style.cursor = 'default'
-            } catch (e) {
-                // Silently absorb worker serialization collision during hot-reload
             }
-        }, ScreenSpaceEventType.MOUSE_MOVE) */
+            canvas.style.cursor = 'default'
+        }, ScreenSpaceEventType.MOUSE_MOVE)
 
-        localHandler.setInputAction(async (click: ScreenSpaceEventHandler.PositionedEvent) => {
+        handler.setInputAction(async (click: ScreenSpaceEventHandler.PositionedEvent) => {
             const viewerInstance = viewer.value
             if (!viewerInstance || viewerInstance.isDestroyed()) return
 
-            // 1. Handle existing GeoJSON / Entity clicks (Lightbox & Captures)
             const pickedObject = viewerInstance.scene.pick(click.position)
 
             if (defined(pickedObject) && pickedObject.id?.properties) {
@@ -258,7 +241,7 @@ onMounted(() => {
             }
 
         }, ScreenSpaceEventType.LEFT_CLICK)
-    })
+    }
 
     document.addEventListener('click', handleClickOutside)
 })
