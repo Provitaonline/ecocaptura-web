@@ -99,7 +99,6 @@ function closeLightbox() {
 }
 
 function handleOpenCaptureCard(captureId: string) {
-	console.log("open capture")
 	sidePanelRef.value?.openCaptureById(captureId)
 }
 </script>

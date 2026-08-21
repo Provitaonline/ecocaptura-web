@@ -178,9 +178,17 @@ onMounted(() => {
 
     handler = new ScreenSpaceEventHandler(viewer.value.scene.canvas)
 
+    let lastMoveTime = 0
     handler.setInputAction((movement: any) => {
-      const pickedObject = viewer.value?.scene.pick(movement.endPosition)
-      const canvas = viewer.value?.scene.canvas
+      // Throttle mouse-move picking slightly to prevent worker race conditions on boot
+      const now = performance.now()
+      if (now - lastMoveTime < 50) return
+      lastMoveTime = now
+
+      if (!viewer.value || viewer.value.isDestroyed()) return
+      
+      const pickedObject = viewer.value.scene.pick(movement.endPosition)
+      const canvas = viewer.value.scene.canvas
       if (!canvas) return
 
       if (defined(pickedObject) && (pickedObject.id?.properties?.photoId || pickedObject.id?.properties?.captureId)) {
@@ -206,7 +214,6 @@ onMounted(() => {
                 emit('open-lightbox', { captureId, id: photoId })
                 return 
             } else if (captureId) {
-                console.log('emit open-capture')
                 emit('open-capture', captureId)
                 return 
             }
