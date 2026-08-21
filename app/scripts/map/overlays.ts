@@ -3,7 +3,7 @@ export const overlayLayers = [
     id: 'aoi',
     nameKey: 'map.overlays.aoi',
     defaultVisible: true,
-    url: '/data/venezuela.topojson',
+    url: '/data/venezuela.json',
     color: '#FFA500',
     type: 'topojson'
   },
@@ -20,7 +20,7 @@ export const overlayLayers = [
     id: 'states',
     nameKey: 'map.overlays.states',
     defaultVisible: false,
-    url: '/data/states.topojson',
+    url: '/data/states.json',
     attribute: 'NAM',
     color: '#00FFFF',
     type: 'topojson'
@@ -29,7 +29,7 @@ export const overlayLayers = [
     id: 'anp',
     nameKey: 'map.overlays.anp',
     defaultVisible: false,
-    url: '/data/protected-areas.topojson',
+    url: '/data/protected-areas.json',
     attribute: 'nombre',
     color: '#CBC3E3',
     type: 'topojson'
