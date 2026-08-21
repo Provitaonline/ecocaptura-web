@@ -176,73 +176,89 @@ onMounted(() => {
 
     ;(window as any).viewer = viewer.value
 
-    handler = new ScreenSpaceEventHandler(viewer.value.scene.canvas)
+    requestAnimationFrame(() => {
+        if (!viewer.value || viewer.value.isDestroyed()) return
 
-    let lastMoveTime = 0
-    handler.setInputAction((movement: any) => {
-      // Throttle mouse-move picking slightly to prevent worker race conditions on boot
-      const now = performance.now()
-      if (now - lastMoveTime < 50) return
-      lastMoveTime = now
+        const localHandler = new ScreenSpaceEventHandler(viewer.value.scene.canvas)
+        handler = localHandler
 
-      if (!viewer.value || viewer.value.isDestroyed()) return
-      
-      const pickedObject = viewer.value.scene.pick(movement.endPosition)
-      const canvas = viewer.value.scene.canvas
-      if (!canvas) return
+        let ticking = false
+        
+        // MOUSE_MOVE handler throttled via requestAnimationFrame with safe try/catch
+        /*localHandler.setInputAction((movement: any) => {
+            if (ticking) return
+            ticking = true
 
-      if (defined(pickedObject) && (pickedObject.id?.properties?.photoId || pickedObject.id?.properties?.captureId)) {
-        canvas.style.cursor = 'pointer'
-      } else {
-        canvas.style.cursor = 'default'
-      }
-    }, ScreenSpaceEventType.MOUSE_MOVE)
+            requestAnimationFrame(() => {
+                ticking = false
+            })
 
-	handler.setInputAction(async (click: ScreenSpaceEventHandler.PositionedEvent) => {
-        const viewerInstance = viewer.value
-        if (!viewerInstance || viewerInstance.isDestroyed()) return
+            const viewerInstance = viewer.value
+            if (!viewerInstance || viewerInstance.isDestroyed()) return
 
-        // 1. Handle existing GeoJSON / Entity clicks (Lightbox & Captures)
-        const pickedObject = viewerInstance.scene.pick(click.position)
+            try {
+                const pickedObject = viewerInstance.scene.pick(movement.endPosition)
+                const canvas = viewerInstance.scene.canvas
+                if (!canvas) return
 
-        if (defined(pickedObject) && pickedObject.id?.properties) {
-            const properties = pickedObject.id.properties
-            const captureId = properties.captureId?.getValue()
-            const photoId = properties.photoId?.getValue()
-
-            if (captureId && photoId) {
-                emit('open-lightbox', { captureId, id: photoId })
-                return 
-            } else if (captureId) {
-                emit('open-capture', captureId)
-                return 
+                if (defined(pickedObject) && pickedObject.id?.properties) {
+                    const props = pickedObject.id.properties
+                    if (props.captureId || props.photoId) {
+                        canvas.style.cursor = 'pointer'
+                        return
+                    }
+                }
+                canvas.style.cursor = 'default'
+            } catch (e) {
+                // Silently absorb worker serialization collision during hot-reload
             }
-        }
+        }, ScreenSpaceEventType.MOUSE_MOVE) */
 
-        const { queryAllLayers } = useMapLayers()
-        const ray = viewerInstance.camera.getPickRay(click.position)
-        const cartesian = ray ? viewerInstance.scene.globe.pick(ray, viewerInstance.scene) : undefined
+        localHandler.setInputAction(async (click: ScreenSpaceEventHandler.PositionedEvent) => {
+            const viewerInstance = viewer.value
+            if (!viewerInstance || viewerInstance.isDestroyed()) return
 
-        if (cartesian) {
-            const cartographic = Cartographic.fromCartesian(cartesian)
-            const layerResults = await queryAllLayers(cartesian, cartographic, click.position)
-            
-            if (layerResults.length > 0) {
-                // Position the popup near the click coordinates
-                popupInfo.value = {
-                    visible: true,
-                    x: click.position.x,
-                    y: click.position.y,
-                    results: layerResults
+            // 1. Handle existing GeoJSON / Entity clicks (Lightbox & Captures)
+            const pickedObject = viewerInstance.scene.pick(click.position)
+
+            if (defined(pickedObject) && pickedObject.id?.properties) {
+                const properties = pickedObject.id.properties
+                const captureId = properties.captureId?.getValue()
+                const photoId = properties.photoId?.getValue()
+
+                if (captureId && photoId) {
+                    emit('open-lightbox', { captureId, id: photoId })
+                    return 
+                } else if (captureId) {
+                    emit('open-capture', captureId)
+                    return 
+                }
+            }
+
+            const { queryAllLayers } = useMapLayers()
+            const ray = viewerInstance.camera.getPickRay(click.position)
+            const cartesian = ray ? viewerInstance.scene.globe.pick(ray, viewerInstance.scene) : undefined
+
+            if (cartesian) {
+                const cartographic = Cartographic.fromCartesian(cartesian)
+                const layerResults = await queryAllLayers(cartesian, cartographic, click.position)
+                
+                if (layerResults.length > 0) {
+                    popupInfo.value = {
+                        visible: true,
+                        x: click.position.x,
+                        y: click.position.y,
+                        results: layerResults
+                    }
+                } else {
+                    closePopup()
                 }
             } else {
                 closePopup()
             }
-        } else {
-            closePopup()
-        }
 
-    }, ScreenSpaceEventType.LEFT_CLICK)
+        }, ScreenSpaceEventType.LEFT_CLICK)
+    })
 
     document.addEventListener('click', handleClickOutside)
 })
@@ -288,7 +304,7 @@ watch(() => props.captures, (newCaptures) => {
             })
         }
     })
-}, { deep: true })
+}, { deep: true, immediate: true })
 
 function flyToCapture(centroidString: string) {
   if (!viewer.value || !centroidString) return
