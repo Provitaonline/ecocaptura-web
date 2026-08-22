@@ -71,6 +71,7 @@ import {
   sampleTerrainMostDetailed, 
   Cartographic,
   Ellipsoid,
+  Cartesian2,
   defined
 } from 'cesium'
 import 'cesium/Build/Cesium/Widgets/widgets.css'
@@ -274,7 +275,8 @@ watch(() => props.captures, (newCaptures) => {
                     scale: 1.0,
                     heightReference: HeightReference.CLAMP_TO_GROUND,
                     verticalOrigin: VerticalOrigin.BOTTOM,
-					eyeOffset: new Cartesian3(0.0, 0.0, -15.0)
+                    pixelOffset: new Cartesian2(0, -10),
+                    disableDepthTestDistance: 50000.0 
                 },
                 properties: { captureId: item.captureId }
             })
