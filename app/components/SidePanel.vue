@@ -98,18 +98,18 @@
               <span class="is-size-7 ml-2">{{$t('loadingPhotos')}}</span>
             </div>
 
-            <!-- Thumbnails Grid -->
+            <!-- Thumbnails Grid using Bulma columns -->
             <div 
               v-else-if="captureDetailsMap[item.captureId]?.photos?.length" 
               :key="detailsRefreshKeys[item.captureId] || 1"
-              style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; width: 100%; min-width: 0;"
-              class="mt-1"
+              class="columns is-multiline is-mobile is-variable is-1 mt-1"
             >
                 <div 
                   v-for="photo in captureDetailsMap[item.captureId]?.photos" 
                   :key="photo.photoId" 
+                  class="column is-one-third"
                   @click="emit('open-lightbox', { captureId: item.captureId, id: photo.photoId })"
-                  style="cursor: pointer; min-width: 0;"
+                  style="cursor: pointer;"
                 >
                   <figure class="image is-square">
                     <img 
