@@ -102,14 +102,13 @@
             <div 
               v-else-if="captureDetailsMap[item.captureId]?.photos?.length" 
               :key="detailsRefreshKeys[item.captureId] || 1"
-              class="columns is-multiline is-mobile mt-1"
+              style="display: flex; flex-wrap: wrap; margin: -4px;"
             >
                 <div 
                   v-for="photo in captureDetailsMap[item.captureId]?.photos" 
                   :key="photo.photoId" 
-                  class="column is-one-third px-1 py-1"
                   @click="emit('open-lightbox', { captureId: item.captureId, id: photo.photoId })"
-                  style="cursor: pointer;"
+                  style="flex: 0 0 33.3333%; max-width: 33.3333%; padding: 4px; box-sizing: border-box; cursor: pointer;"
                 >
                   <figure class="image is-square">
                     <img 
