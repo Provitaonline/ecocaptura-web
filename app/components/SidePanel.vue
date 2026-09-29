@@ -102,14 +102,14 @@
             <div 
               v-else-if="captureDetailsMap[item.captureId]?.photos?.length" 
               :key="detailsRefreshKeys[item.captureId] || 1"
-              style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px;"
+              style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; width: 100%; min-width: 0;"
               class="mt-1"
             >
                 <div 
                   v-for="photo in captureDetailsMap[item.captureId]?.photos" 
                   :key="photo.photoId" 
                   @click="emit('open-lightbox', { captureId: item.captureId, id: photo.photoId })"
-                  style="cursor: pointer;"
+                  style="cursor: pointer; min-width: 0;"
                 >
                   <figure class="image is-square">
                     <img 
