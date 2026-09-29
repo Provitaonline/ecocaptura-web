@@ -92,19 +92,20 @@
               <strong>Quality Note:</strong> {{ item.qualityReason }}
             </p>
 
-            <!-- Loading state -->
-            <div v-if="loadingDetailsMap[item.captureId]" class="has-text-centered py-3">
-              <span class="icon is-small is-loading"></span>
-              <span class="is-size-7 ml-2">{{$t('loadingPhotos')}}</span>
-            </div>
-
-            <!-- Thumbnails Grid using Bulma columns -->
+            <!-- Thumbnails Grid Container - always renders with Bulma grid classes -->
             <div 
-              v-else-if="captureDetailsMap[item.captureId]?.photos?.length" 
+              v-if="captureDetailsMap[item.captureId]"
               :key="detailsRefreshKeys[item.captureId] || 1"
               class="columns is-multiline is-mobile is-variable is-1 mt-1"
             >
+                <!-- Show loading indicator inside if photos are still fetching -->
+                <div v-if="!captureDetailsMap[item.captureId]?.photos" class="column is-full has-text-centered py-3">
+                    <span class="icon is-small is-loading"></span>
+                </div>
+
+                <!-- Render photos once available -->
                 <div 
+                  v-else
                   v-for="photo in captureDetailsMap[item.captureId]?.photos" 
                   :key="photo.photoId" 
                   class="column is-one-third"
@@ -116,7 +117,6 @@
                       :src="photo.thumbnailUrl || '/images/placeholder.png'" 
                       :alt="photo.description || 'Capture photo thumbnail'"
                       style="object-fit: cover; border-radius: 4px;"
-                      @error="(e) => handleThumbnailError(item.captureId, photo, e)"
                     />
                   </figure>
                 </div>
