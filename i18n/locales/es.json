@@ -47,5 +47,7 @@
   "seeCaptures": "Ver capturas",
   "addToMap": "Añadir al mapa",
   "developedBy": "Este sitio de prueba está siendo desarrollado por ",
-  "loadingCaptures": "Cargando capturas"
+  "loadingCaptures": "Cargando capturas",
+  "loadingPhotos": "Cargando fotos...",
+  "editCapture": "Editar captura"
 }

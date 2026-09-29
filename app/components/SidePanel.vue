@@ -64,8 +64,8 @@
 
           <!-- Card Content / Expanded Section -->
           <div v-if="item.expanded" class="card-content">
-            <!-- Add to Map Switch -->
-            <div class="mb-3">
+            <!-- Add to Map Switch & Edit Button -->
+            <div class="is-flex is-justify-content-space-between is-align-items-center mb-3">
               <b-switch 
                 v-model="showPhotosMap[item.captureId]" 
                 size="is-small"
@@ -73,6 +73,19 @@
               >
                 {{ $t('addToMap') }}
               </b-switch>
+
+              <!-- Edit Button (Top Right) -->
+              <button 
+                class="button is-small p-0 has-text-grey" 
+                @click="emit('edit-capture', item.captureId)"
+                :aria-label="$t('editCapture')"
+                :title="$t('editCapture')"
+                style="height: auto; border: none; background: transparent;"
+              >
+                <span class="icon" aria-hidden="true">
+                  <i class="mdi mdi-square-edit-outline mdi-24px"></i>
+                </span>
+              </button>
             </div>
 
             <p v-if="item.qualityReason" class="is-size-7 mb-2 has-text-grey">
@@ -82,7 +95,7 @@
             <!-- Loading state -->
             <div v-if="loadingDetailsMap[item.captureId]" class="has-text-centered py-3">
               <span class="icon is-small is-loading"></span>
-              <span class="is-size-7 ml-2">Loading photos...</span>
+              <span class="is-size-7 ml-2">{{$t('loadingPhotos')}}</span>
             </div>
 
             <!-- Thumbnails Grid using Bulma columns -->
@@ -183,6 +196,7 @@ const emit = defineEmits<{
   (e: 'select-capture', item: Capture): void
   (e: 'toggle-capture-photos', payload: { captureId: string; enabled: boolean; photos: any[] }): void
   (e: 'open-lightbox', photo: { captureId: string; id: string }): void
+  (e: 'edit-capture', captureId: string): void
 }>()
 
 const captureList = ref<Capture[]>([])
