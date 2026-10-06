@@ -77,7 +77,7 @@
               <!-- Edit Button (Top Right) -->
               <button 
                 class="button is-small p-0 has-text-grey" 
-                @click="emit('edit-capture', item.captureId)"
+                @click="handleOpenEditModal(item.captureId)"
                 :aria-label="$t('editCapture')"
                 :title="$t('editCapture')"
                 style="height: auto; border: none; background: transparent;"
@@ -136,6 +136,13 @@
         {{$t('errors.noCaptures')}}
       </div>
     </div>
+    <EditCaptureModal
+      v-model:active="isEditModalActive"
+      v-model:description="editFormState.description"
+      v-model:quality-score="editFormState.qualityScore"
+      v-model:quality-reason="editFormState.qualityReason"
+      :capture-id="activeEditCaptureId"
+    />
   </div>
 </template>
 
@@ -190,13 +197,13 @@ import type { CaptureDetailRecord } from '~/scripts/data/captureDetails'
 import type { Capture } from '@/scripts/data/captures'
 import { getDownloadPresignedUrls } from '@/scripts/data/getDownloadPresignedUrls'
 import { cachePresignedUrl, getCachedPresignedUrl } from '@/scripts/utils/presignedCache'
+import EditCaptureModal from './modals/EditCaptureModal.vue'
 
 const emit = defineEmits<{
   (e: 'update:filtered-captures', list: Capture[]): void
   (e: 'select-capture', item: Capture): void
   (e: 'toggle-capture-photos', payload: { captureId: string; enabled: boolean; photos: any[] }): void
   (e: 'open-lightbox', photo: { captureId: string; id: string }): void
-  (e: 'edit-capture', captureId: string): void
 }>()
 
 const captureList = ref<Capture[]>([])
@@ -216,6 +223,15 @@ const activeLightboxImage = ref<string | null>(null)
 const isImageLoading = ref(false)
 
 const detailsRefreshKeys = ref<Record<string, number>>({})
+
+// Modal state tracking
+const isEditModalActive = ref(false);
+const activeEditCaptureId = ref<string>('');
+const editFormState = ref({
+  description: '',
+  qualityScore: null as number | null,
+  qualityReason: '',
+})
 
 const filteredCaptures = computed(() => {
   if (!captureList.value.length) return []
@@ -409,6 +425,23 @@ const openCaptureById = async (captureId: string) => {
       })
     }
   }
+}
+
+const handleOpenEditModal = (captureId: string) => {
+  console.log('open modal', captureId)
+  activeEditCaptureId.value = captureId
+  const details = captureDetailsMap.value[captureId]
+
+  console.log(details?.description)
+  
+  editFormState.value = {
+    description: details?.description || '',
+    qualityScore: details?.qualityScore ?? null,
+    qualityReason: details?.qualityReason || '',
+  };
+  
+  isEditModalActive.value = true
+  console.log("isEditModalActive:", isEditModalActive.value)
 }
 
 // Expose methods to the parent component
