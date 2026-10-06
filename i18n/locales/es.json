@@ -51,6 +51,8 @@
   "loadingPhotos": "Cargando fotos...",
   "editCapture": "Editar captura",
   "qualityNote": "Nota de calidad:",
+  "qualityReason": "Razón de calidad",
+  "selectQualityReason": "Selecciona una razón...",
   "qualityReasons": {
     "poor_gps": "Mala señal de GPS",
     "blurry": "Borroso",

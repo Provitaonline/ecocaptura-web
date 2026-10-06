@@ -45,12 +45,20 @@
         </b-field>
 
         <!-- Quality Reason -->
-        <b-field label="Quality Reason">
-          <b-input 
-            type="text" 
-            v-model="qualityReason" 
-            placeholder="Reason for quality score..." 
-          />
+        <b-field :label="$t('qualityReason')">
+          <b-select
+            v-model="qualityReason"
+            expanded
+            :placeholder="$t('selectQualityReason')"
+          >
+            <option
+              v-for="option in qualityReasonOptions"
+              :key="option.value"
+              :value="option.value"
+            >
+              {{ option.label }}
+            </option>
+          </b-select>
         </b-field>
       </section>
 
@@ -63,12 +71,34 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import enLocale from '@@/i18n/locales/en.json'
+
+const { t } = useI18n()
 
 const isOpen = defineModel<boolean>('active', { required: true })
 const description = defineModel<string>('description', { default: '' })
 const qualityScore = defineModel<number | null>('qualityScore', { default: null })
 const qualityReason = defineModel<string>('qualityReason', { default: '' })
+
+// Derive reason keys dynamically from en.json to avoid duplication
+const qualityReasonKeys = Object.keys(enLocale.qualityReasons)
+
+const qualityReasonOptions = computed(() => {
+  const options = qualityReasonKeys.map(key => ({
+    value: key,
+    label: t(`qualityReasons.${key}`)
+  }))
+
+  // If the capture has an existing custom/legacy reason not in en.json, keep it as an option
+  if (qualityReason.value && !qualityReasonKeys.includes(qualityReason.value)) {
+    options.push({
+      value: qualityReason.value,
+      label: qualityReason.value
+    })
+  }
+  return options
+})
 
 const hoverScore = ref(0)
 
