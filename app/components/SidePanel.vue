@@ -89,7 +89,7 @@
             </div>
 
             <p v-if="item.qualityReason" class="is-size-7 mb-2 has-text-grey">
-              <strong>{{ $t('qualityNote') }}</strong> {{ decodeQualityReason(item.qualityReason) }}
+              <strong>{{ $t('qualityReason') }}</strong> {{ decodeQualityReason(item.qualityReason) }}
             </p>
 
             <!-- Thumbnails Grid Container - always renders with Bulma grid classes -->
