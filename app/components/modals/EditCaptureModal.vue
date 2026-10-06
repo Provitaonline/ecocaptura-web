@@ -24,12 +24,24 @@
 
         <!-- Quality Score -->
         <b-field label="Quality Score">
-          <b-numberinput 
-            v-model="qualityScore" 
-            :min="0" 
-            :max="10" 
-            controls-position="compact"
-          />
+          <div class="star-rating is-flex is-align-items-center" @mouseleave="hoverScore = 0">
+            <span
+              v-for="star in 3"
+              :key="star"
+              role="button"
+              :tabindex="0"
+              :aria-label="`Set score to ${star} star${star > 1 ? 's' : ''}`"
+              class="icon is-medium has-text-warning mr-1"
+              @click="setQualityScore(star)"
+              @keydown.enter.prevent="setQualityScore(star)"
+              @keydown.space.prevent="setQualityScore(star)"
+              @mouseenter="onMouseEnter(star)"
+            >
+              <i
+                :class="star <= (hoverScore || qualityScore || 0) ? 'mdi mdi-star mdi-24px' : 'mdi mdi-star-outline mdi-24px'"
+              ></i>
+            </span>
+          </div>
         </b-field>
 
         <!-- Quality Reason -->
@@ -51,10 +63,29 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
+
 const isOpen = defineModel<boolean>('active', { required: true })
 const description = defineModel<string>('description', { default: '' })
 const qualityScore = defineModel<number | null>('qualityScore', { default: null })
 const qualityReason = defineModel<string>('qualityReason', { default: '' })
+
+const hoverScore = ref(0)
+
+const onMouseEnter = (star: number) => {
+  if (typeof window !== 'undefined' && window.matchMedia?.('(hover: hover) and (pointer: fine)').matches) {
+    hoverScore.value = star
+  }
+}
+
+const setQualityScore = (star: number) => {
+  hoverScore.value = 0
+  if (qualityScore.value === star) {
+    qualityScore.value = 0
+  } else {
+    qualityScore.value = star
+  }
+}
 
 const props = defineProps<{
   captureId: string
@@ -80,3 +111,21 @@ const handleSave = () => {
 }
 
 </script>
+
+<style scoped>
+.star-rating .icon {
+  cursor: pointer;
+  user-select: none;
+  touch-action: manipulation;
+  width: 2.25rem;
+  height: 2.25rem;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.1s ease-in-out;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .star-rating .icon:hover {
+    transform: scale(1.15);
+  }
+}
+</style>
