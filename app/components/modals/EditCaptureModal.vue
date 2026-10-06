@@ -45,7 +45,10 @@
         </b-field>
 
         <!-- Quality Reason -->
-        <b-field :label="$t('qualityReason')">
+        <b-field 
+          v-if="qualityScore !== null && qualityScore < 3" 
+          :label="$t('qualityReason')"
+        >
           <b-select
             v-model="qualityReason"
             expanded
@@ -71,7 +74,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import enLocale from '@@/i18n/locales/en.json'
 
 const { t } = useI18n()
@@ -80,6 +83,16 @@ const isOpen = defineModel<boolean>('active', { required: true })
 const description = defineModel<string>('description', { default: '' })
 const qualityScore = defineModel<number | null>('qualityScore', { default: null })
 const qualityReason = defineModel<string>('qualityReason', { default: '' })
+
+watch([qualityScore, isOpen], ([score, open]) => {
+  if (open && score !== null && score < 3) {
+    if (!qualityReason.value) {
+      qualityReason.value = 'other'
+    }
+  } else if (score !== null && score >= 3) {
+    qualityReason.value = ''
+  }
+}, { immediate: true })
 
 // Derive reason keys dynamically from en.json to avoid duplication
 const qualityReasonKeys = Object.keys(enLocale.qualityReasons)
@@ -115,6 +128,13 @@ const setQualityScore = (star: number) => {
   } else {
     qualityScore.value = star
   }
+  if (qualityScore.value !== null && qualityScore.value < 3) {
+    if (!qualityReason.value) {
+      qualityReason.value = 'other'
+    }
+  } else if (qualityScore.value !== null && qualityScore.value >= 3) {
+    qualityReason.value = ''
+  }
 }
 
 const props = defineProps<{
@@ -131,11 +151,15 @@ const close = () => {
 
 const handleSave = () => {
   console.log('save')
+  const finalReason = (qualityScore.value !== null && qualityScore.value < 3)
+    ? (qualityReason.value || 'other')
+    : ''
+
   emit('save', {
     captureId: props.captureId,
     description: description.value,
     qualityScore: qualityScore.value,
-    qualityReason: qualityReason.value,
+    qualityReason: finalReason,
   })
   isOpen.value = false
 }
