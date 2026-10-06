@@ -38,7 +38,7 @@
               @mouseenter="onMouseEnter(star)"
             >
               <i
-                :class="star <= (hoverScore || qualityScore || 0) ? 'mdi mdi-star mdi-24px' : 'mdi mdi-star-outline mdi-24px'"
+                :class="star <= (hoverScore || (qualityScore ?? 3)) ? 'mdi mdi-star mdi-24px' : 'mdi mdi-star-outline mdi-24px'"
               ></i>
             </span>
           </div>
@@ -46,7 +46,7 @@
 
         <!-- Quality Reason -->
         <b-field 
-          v-if="qualityScore !== null && qualityScore < 3" 
+          v-if="(qualityScore ?? 3) < 3" 
           :label="$t('qualityReason')"
         >
           <b-select
@@ -81,15 +81,40 @@ const { t } = useI18n()
 
 const isOpen = defineModel<boolean>('active', { required: true })
 const description = defineModel<string>('description', { default: '' })
-const qualityScore = defineModel<number | null>('qualityScore', { default: null })
+const qualityScore = defineModel<number | null>('qualityScore', { default: 3 })
 const qualityReason = defineModel<string>('qualityReason', { default: '' })
 
-watch([qualityScore, isOpen], ([score, open]) => {
-  if (open && score !== null && score < 3) {
+const ensureValidQuality = () => {
+  const current = qualityScore.value
+  if (!current || current < 1 || current > 3) {
+    qualityScore.value = 3
+  }
+  const score = qualityScore.value ?? 3
+  if (score < 3) {
     if (!qualityReason.value) {
       qualityReason.value = 'other'
     }
-  } else if (score !== null && score >= 3) {
+  } else {
+    qualityReason.value = ''
+  }
+}
+
+watch(isOpen, (open) => {
+  if (open) {
+    ensureValidQuality()
+  }
+}, { immediate: true })
+
+watch(qualityScore, (newScore) => {
+  if (!newScore || newScore < 1 || newScore > 3) {
+    qualityScore.value = 3
+    return
+  }
+  if (newScore < 3) {
+    if (!qualityReason.value) {
+      qualityReason.value = 'other'
+    }
+  } else {
     qualityReason.value = ''
   }
 }, { immediate: true })
@@ -123,16 +148,12 @@ const onMouseEnter = (star: number) => {
 
 const setQualityScore = (star: number) => {
   hoverScore.value = 0
-  if (qualityScore.value === star) {
-    qualityScore.value = 0
-  } else {
-    qualityScore.value = star
-  }
-  if (qualityScore.value !== null && qualityScore.value < 3) {
+  qualityScore.value = star
+  if (star < 3) {
     if (!qualityReason.value) {
       qualityReason.value = 'other'
     }
-  } else if (qualityScore.value !== null && qualityScore.value >= 3) {
+  } else {
     qualityReason.value = ''
   }
 }
@@ -142,7 +163,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  (e: 'save', payload: { captureId: string; description: string; qualityScore: number | null; qualityReason: string }): void
+  (e: 'save', payload: { captureId: string; description: string; qualityScore: number; qualityReason: string }): void
 }>()
 
 const close = () => {
@@ -151,14 +172,14 @@ const close = () => {
 
 const handleSave = () => {
   console.log('save')
-  const finalReason = (qualityScore.value !== null && qualityScore.value < 3)
-    ? (qualityReason.value || 'other')
-    : ''
+  const current = qualityScore.value
+  const score = (current !== null && current >= 1 && current <= 3) ? current : 3
+  const finalReason = score < 3 ? (qualityReason.value || 'other') : ''
 
   emit('save', {
     captureId: props.captureId,
     description: description.value,
-    qualityScore: qualityScore.value,
+    qualityScore: score,
     qualityReason: finalReason,
   })
   isOpen.value = false
