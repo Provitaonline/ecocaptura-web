@@ -8,22 +8,22 @@
 	>
     <div class="modal-card">
       <header class="modal-card-head">
-        <p class="modal-card-title">Edit Capture Details</p>
+        <p class="modal-card-title">{{ $t('editCaptureDetails') }}</p>
         <button type="button" class="delete" @click="close" />
       </header>
 
       <section class="modal-card-body">
         <!-- Description -->
-        <b-field label="Description">
+        <b-field :label="$t('description')">
           <b-input 
             type="textarea" 
             v-model="description" 
-            placeholder="Enter description..." 
+            :placeholder="$t('enterDescription')" 
           />
         </b-field>
 
         <!-- Quality Score -->
-        <b-field label="Quality Score">
+        <b-field :label="$t('qualityScore')">
           <div class="star-rating is-flex is-align-items-center" @mouseleave="hoverScore = 0">
             <span
               v-for="star in 3"

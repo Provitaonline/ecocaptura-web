@@ -50,7 +50,11 @@
   "loadingCaptures": "Cargando capturas",
   "loadingPhotos": "Cargando fotos...",
   "editCapture": "Editar captura",
-  "qualityReason": "Razón de calidad",
+  "editCaptureDetails": "Editar detalles de captura",
+  "description": "Descripción",
+  "enterDescription": "Ingresar descripción...",
+  "qualityScore": "Calificación de calidad del dato",
+  "qualityReason": "Razón de la calificación de calidad",
   "selectQualityReason": "Selecciona una razón...",
   "qualityReasons": {
     "poor_gps": "Mala señal de GPS",

@@ -49,7 +49,11 @@
   "loadingCaptures": "Loading captures",
   "loadingPhotos": "Loading photos...",
   "editCapture": "Edit capture",
-  "qualityReason": "Quality Reason",
+  "editCaptureDetails": "Edit capture details",
+  "description": "Description",
+  "enterDescription": "Enter description...",
+  "qualityScore": "Data quality rating",
+  "qualityReason": "Quality rating reason",
   "selectQualityReason": "Select a reason...",
   "qualityReasons": {
     "poor_gps": "Poor GPS",
