@@ -48,5 +48,12 @@
   "developedBy": "This testing site is currently being developed by ",
   "loadingCaptures": "Loading captures",
   "loadingPhotos": "Loading photos...",
-  "editCapture": "Edit capture"
+  "editCapture": "Edit capture",
+  "qualityNote": "Quality Note:",
+  "qualityReasons": {
+    "poor_gps": "Poor GPS",
+    "blurry": "Blurry",
+    "obstructed": "Obstructed",
+    "other": "Other"
+  }
 }

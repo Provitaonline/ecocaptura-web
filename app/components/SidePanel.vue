@@ -89,7 +89,7 @@
             </div>
 
             <p v-if="item.qualityReason" class="is-size-7 mb-2 has-text-grey">
-              <strong>Quality Note:</strong> {{ item.qualityReason }}
+              <strong>{{ $t('qualityNote') }}</strong> {{ decodeQualityReason(item.qualityReason) }}
             </p>
 
             <!-- Thumbnails Grid Container - always renders with Bulma grid classes -->
@@ -198,6 +198,8 @@ import type { Capture } from '@/scripts/data/captures'
 import { getDownloadPresignedUrls } from '@/scripts/data/getDownloadPresignedUrls'
 import { cachePresignedUrl, getCachedPresignedUrl } from '@/scripts/utils/presignedCache'
 import EditCaptureModal from './modals/EditCaptureModal.vue'
+
+const { t, te } = useI18n()
 
 const emit = defineEmits<{
   (e: 'update:filtered-captures', list: Capture[]): void
@@ -361,6 +363,12 @@ const toggleCard = async (item: Capture) => {
 const formatDate = (dateString?: string): string => {
   if (!dateString) return 'Unknown date'
   return new Date(dateString).toLocaleString()
+}
+
+const decodeQualityReason = (reason?: string | null): string => {
+  if (!reason) return ''
+  const key = `qualityReasons.${reason.trim()}`
+  return te(key) ? t(key) : reason
 }
 
 const handlePhotoToggle = async (captureId: string) => {

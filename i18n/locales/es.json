@@ -49,5 +49,12 @@
   "developedBy": "Este sitio de prueba está siendo desarrollado por ",
   "loadingCaptures": "Cargando capturas",
   "loadingPhotos": "Cargando fotos...",
-  "editCapture": "Editar captura"
+  "editCapture": "Editar captura",
+  "qualityNote": "Nota de calidad:",
+  "qualityReasons": {
+    "poor_gps": "Mala señal de GPS",
+    "blurry": "Borroso",
+    "obstructed": "Obstrucción",
+    "other": "Otra"
+  }
 }
