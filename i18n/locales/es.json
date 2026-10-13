@@ -5,6 +5,19 @@
     "logout": "Cerrar sesión",
     "welcome": "Conectado como {email}"
   },
+ "admin": {
+    "title": "Administración",
+    "navLabel": "Admin",
+    "editUser": "Editar usuario",
+    "username": "Username",
+    "email": "Email",
+    "isAdmin": "Administrador",
+    "isReviewer": "Revisor",
+    "searchPlaceholder": "Buscar por nombre de usuario or email...",
+    "loadingUsers": "Cargando usuarios...",
+    "noUsers": "No se encontraron usuarios.",
+    "cannotChangeOwnAdmin": "No se puede remover su propio acceso de administración."
+  },
   "AppTitle": "ecocaptura",
   "auth": {
     "modal_title": "¡Bienvenido a EcoCaptura!",
@@ -44,7 +57,6 @@
     "noPhotos": "Esta captura no tiene fotos."
   },
   "captures": "Capturas",
-  "admin": "Administración",
   "seeCaptures": "Ver capturas",
   "addToMap": "Añadir al mapa",
   "developedBy": "Este sitio de prueba está siendo desarrollado por ",

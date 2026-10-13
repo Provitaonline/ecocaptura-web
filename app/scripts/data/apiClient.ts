@@ -24,6 +24,8 @@ export async function apiClient<T>(endpoint: string, options: ApiClientOptions =
     const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`
     const url = `${config.public.apiBase}${cleanEndpoint}`
 
+    console.log(url)
+
     return fetch(url, {
       ...options,
       body: formattedBody,

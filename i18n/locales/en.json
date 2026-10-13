@@ -5,6 +5,19 @@
     "logout": "Logout",
     "welcome": "Logged in as {email}"
   },
+  "admin": {
+    "title": "Administration",
+    "navLabel": "Admin",
+    "editUser": "Edit user",
+    "username": "Username",
+    "email": "Email",
+    "isAdmin": "Admin",
+    "isReviewer": "Reviewer",
+    "searchPlaceholder": "Search by username or email...",
+    "loadingUsers": "Loading users...",
+    "noUsers": "No users found.",
+    "cannotChangeOwnAdmin": "You cannot remove your own admin access."
+  },
   "auth": {
     "modal_title": "Welcome to EcoCaptura!",
     "modal_desc": "Please choose a unique username to complete your account.",
@@ -43,7 +56,6 @@
     "noPhotos": "No photos attached to this capture."
   },
   "captures": "Captures",
-  "admin": "Administration",
   "seeCaptures": "See captures",
   "addToMap": "Add to map",
   "developedBy": "This testing site is currently being developed by ",
