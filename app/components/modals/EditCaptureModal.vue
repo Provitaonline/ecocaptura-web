@@ -9,10 +9,20 @@
     <div class="modal-card">
       <header class="modal-card-head">
         <p class="modal-card-title">{{ $t('editCaptureDetails') }}</p>
-        <button type="button" class="delete" @click="close" />
+        <button type="button" class="delete" :disabled="isSaving" @click="close" />
       </header>
 
       <section class="modal-card-body">
+        <b-message 
+          v-if="saveError" 
+          type="is-danger" 
+          :closable="false" 
+          size="is-small" 
+          class="mb-3"
+        >
+          {{ saveError }}
+        </b-message>
+
         <!-- Description -->
         <b-field :label="$t('description')">
           <b-input 
@@ -66,8 +76,17 @@
       </section>
 
       <footer class="modal-card-foot">
-        <button class="button is-primary" @click="handleSave">Save Changes</button>
-        <button class="button" @click="close">Cancel</button>
+        <button 
+          class="button is-primary" 
+          :class="{ 'is-loading': isSaving }" 
+          :disabled="isSaving" 
+          @click="handleSave"
+        >
+          {{ $t('saveChanges') }}
+        </button>
+        <button class="button" :disabled="isSaving" @click="close">
+          {{ $t('cancel') }}
+        </button>
       </footer>
     </div>
   </b-modal>
@@ -76,6 +95,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import enLocale from '@@/i18n/locales/en.json'
+import { updateCapture } from '~/scripts/data/captureDetails'
 
 const { t } = useI18n()
 
@@ -83,6 +103,9 @@ const isOpen = defineModel<boolean>('active', { required: true })
 const description = defineModel<string>('description', { default: '' })
 const qualityScore = defineModel<number | null>('qualityScore', { default: 3 })
 const qualityReason = defineModel<string>('qualityReason', { default: '' })
+
+const isSaving = ref(false)
+const saveError = ref('')
 
 const ensureValidQuality = () => {
   const current = qualityScore.value
@@ -101,6 +124,7 @@ const ensureValidQuality = () => {
 
 watch(isOpen, (open) => {
   if (open) {
+    saveError.value = ''
     ensureValidQuality()
   }
 }, { immediate: true })
@@ -163,26 +187,49 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  (e: 'save', payload: { captureId: string; description: string; qualityScore: number; qualityReason: string }): void
+  (e: 'save', payload: {
+    captureId: string
+    description: string
+    qualityScore: number
+    qualityReason: string
+    updatedRecord?: any
+  }): void
 }>()
 
 const close = () => {
+  if (isSaving.value) return
+  saveError.value = ''
   isOpen.value = false
 }
 
-const handleSave = () => {
-  console.log('save')
-  const current = qualityScore.value
-  const score = (current !== null && current >= 1 && current <= 3) ? current : 3
-  const finalReason = score < 3 ? (qualityReason.value || 'other') : ''
+const handleSave = async () => {
+  saveError.value = ''
+  isSaving.value = true
+  try {
+    const current = qualityScore.value
+    const score = (current !== null && current >= 1 && current <= 3) ? current : 3
+    const finalReason = score < 3 ? (qualityReason.value || 'other') : ''
 
-  emit('save', {
-    captureId: props.captureId,
-    description: description.value,
-    qualityScore: score,
-    qualityReason: finalReason,
-  })
-  isOpen.value = false
+    const updated = await updateCapture(props.captureId, {
+      description: description.value,
+      qualityScore: score,
+      qualityReason: finalReason,
+    })
+
+    emit('save', {
+      captureId: props.captureId,
+      description: description.value,
+      qualityScore: score,
+      qualityReason: finalReason,
+      updatedRecord: updated,
+    })
+    isOpen.value = false
+  } catch (error: any) {
+    console.error('Failed to update capture:', error)
+    saveError.value = error.message || 'Failed to update capture details.'
+  } finally {
+    isSaving.value = false
+  }
 }
 
 </script>

@@ -2,10 +2,23 @@ import { useRuntimeConfig } from '#imports'
 import { useAuthStore } from '~/scripts/stores/auth'
 import { tokenStorage } from '../utils/tokenStorage'
 
-export async function apiClient<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+export interface ApiClientOptions extends Omit<RequestInit, 'body'> {
+  body?: any
+}
+
+export async function apiClient<T>(endpoint: string, options: ApiClientOptions = {}): Promise<T> {
   const config = useRuntimeConfig()
   const auth = useAuthStore()
   let accessToken = tokenStorage.getAccessToken()
+
+  const formattedBody =
+    options.body !== undefined &&
+    typeof options.body === 'object' &&
+    !(options.body instanceof FormData) &&
+    !(options.body instanceof Blob) &&
+    !(options.body instanceof ArrayBuffer)
+      ? JSON.stringify(options.body)
+      : options.body
 
   const makeRequest = async (token: string | null) => {
     const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`
@@ -13,6 +26,7 @@ export async function apiClient<T>(endpoint: string, options: RequestInit = {}):
 
     return fetch(url, {
       ...options,
+      body: formattedBody,
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token || ''}`,
@@ -38,19 +52,54 @@ export async function apiClient<T>(endpoint: string, options: RequestInit = {}):
     responseData?.error === 'InvalidToken' || 
     responseData?.description?.includes('expired')
 
-if (isTokenExpired) {
+  if (isTokenExpired) {
     const newToken = await auth.refreshAccessToken()
     if (newToken) {
       response = await makeRequest(newToken)
-      responseData = null 
+      responseData = null
+      try {
+        responseData = await response.clone().json()
+      } catch {
+        // Response wasn't JSON
+      }
     } else {
       throw new Error('Unauthorized: Session could not be refreshed.')
     }
   }
 
   if (!response.ok) {
-    throw new Error(`API Error [${endpoint}]: ${response.status} ${response.statusText}`)
+    const errorMessage = responseData?.message || responseData?.error || response.statusText
+    throw new Error(`API Error [${endpoint}]: ${response.status} ${errorMessage}`)
   }
 
-  return responseData || (await response.json())
+  if (response.status === 204) {
+    return null as T
+  }
+
+  if (responseData !== null) {
+    return responseData as T
+  }
+
+  try {
+    const text = await response.text()
+    if (!text) return null as T
+    return JSON.parse(text) as T
+  } catch {
+    return null as T
+  }
 }
+
+apiClient.get = <T>(endpoint: string, options?: ApiClientOptions) =>
+  apiClient<T>(endpoint, { ...options, method: 'GET' })
+
+apiClient.post = <T>(endpoint: string, body?: any, options?: ApiClientOptions) =>
+  apiClient<T>(endpoint, { ...options, method: 'POST', body })
+
+apiClient.patch = <T>(endpoint: string, body?: any, options?: ApiClientOptions) =>
+  apiClient<T>(endpoint, { ...options, method: 'PATCH', body })
+
+apiClient.put = <T>(endpoint: string, body?: any, options?: ApiClientOptions) =>
+  apiClient<T>(endpoint, { ...options, method: 'PUT', body })
+
+apiClient.delete = <T>(endpoint: string, options?: ApiClientOptions) =>
+  apiClient<T>(endpoint, { ...options, method: 'DELETE' })

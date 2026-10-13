@@ -55,6 +55,8 @@
   "qualityScore": "Data quality rating",
   "qualityReason": "Quality rating reason",
   "selectQualityReason": "Select a reason...",
+  "saveChanges": "Save changes",
+  "cancel": "Cancel",
   "qualityReasons": {
     "poor_gps": "Poor GPS",
     "blurry": "Blurry",

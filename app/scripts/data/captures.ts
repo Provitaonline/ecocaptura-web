@@ -16,3 +16,5 @@ export async function getCaptures(): Promise<Capture[]> {
   const response = await apiClient<{ captures: Capture[] }>('/captures')
   return response.captures || []
 }
+
+export { updateCapture, type UpdateCapturePayload } from './captureDetails'

@@ -142,6 +142,7 @@
       v-model:quality-score="editFormState.qualityScore"
       v-model:quality-reason="editFormState.qualityReason"
       :capture-id="activeEditCaptureId"
+      @save="handleCaptureSaved"
     />
   </div>
 </template>
@@ -436,20 +437,46 @@ const openCaptureById = async (captureId: string) => {
 }
 
 const handleOpenEditModal = (captureId: string) => {
-  console.log('open modal', captureId)
   activeEditCaptureId.value = captureId
   const details = captureDetailsMap.value[captureId]
+  const captureItem = captureList.value.find(c => c.captureId === captureId)
 
-  console.log(details?.description)
-  
   editFormState.value = {
-    description: details?.description || '',
-    qualityScore: details?.qualityScore ?? null,
-    qualityReason: details?.qualityReason || '',
-  };
-  
+    description: details?.description ?? captureItem?.description ?? '',
+    qualityScore: details?.qualityScore ?? captureItem?.qualityScore ?? null,
+    qualityReason: details?.qualityReason ?? captureItem?.qualityReason ?? '',
+  }
+
   isEditModalActive.value = true
-  console.log("isEditModalActive:", isEditModalActive.value)
+}
+
+const handleCaptureSaved = (payload: {
+  captureId: string
+  description: string
+  qualityScore: number
+  qualityReason: string
+  updatedRecord?: CaptureDetailRecord
+}) => {
+  // 1. Update in captureDetailsMap if present
+  const existing = captureDetailsMap.value[payload.captureId]
+  if (existing) {
+    captureDetailsMap.value[payload.captureId] = {
+      ...existing,
+      ...(payload.updatedRecord ? payload.updatedRecord : existing),
+      description: payload.description,
+      qualityScore: payload.qualityScore,
+      qualityReason: payload.qualityReason,
+    }
+    detailsRefreshKeys.value[payload.captureId] = (detailsRefreshKeys.value[payload.captureId] || 0) + 1
+  }
+
+  // 2. Update in captureList so sidebar card reflects changes immediately
+  const item = captureList.value.find(c => c.captureId === payload.captureId)
+  if (item) {
+    item.description = payload.description
+    item.qualityScore = payload.qualityScore
+    item.qualityReason = payload.qualityReason
+  }
 }
 
 // Expose methods to the parent component

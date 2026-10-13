@@ -38,3 +38,20 @@ export async function getCaptureDetails(captureId: string | number): Promise<Cap
 
   return apiClient<CaptureDetailRecord>(`capture/${captureId}`)
 }
+
+export interface UpdateCapturePayload {
+  description?: string | null
+  qualityScore?: number | null
+  qualityReason?: string | null
+}
+
+export async function updateCapture(
+  captureId: string | number,
+  payload: UpdateCapturePayload
+): Promise<CaptureDetailRecord> {
+  if (!captureId) {
+    throw new Error('A valid captureId is required to update capture details.')
+  }
+
+  return apiClient.patch<CaptureDetailRecord>(`capture/${captureId}`, payload)
+}
