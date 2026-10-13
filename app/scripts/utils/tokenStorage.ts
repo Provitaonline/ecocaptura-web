@@ -20,11 +20,19 @@ export const tokenStorage = {
     return null
   },
 
-  setTokens(accessToken: string, refreshToken: string, username: string) {
+  getIsAdmin(): boolean {
+    if (import.meta.client) {
+      return localStorage.getItem('ecocaptura-is-admin') === 'true'
+    }
+    return false
+  },
+
+  setTokens(accessToken: string, refreshToken: string, username: string, isAdmin = false) {
     if (import.meta.client) {
       localStorage.setItem('ecocaptura-access-token', accessToken)
       localStorage.setItem('ecocaptura-refresh-token', refreshToken)
       localStorage.setItem('ecocaptura-username', username)
+      localStorage.setItem('ecocaptura-is-admin', String(isAdmin))
     }
   },
 
@@ -39,6 +47,7 @@ export const tokenStorage = {
       localStorage.removeItem('ecocaptura-access-token')
       localStorage.removeItem('ecocaptura-refresh-token')
       localStorage.removeItem('ecocaptura-username')
+      localStorage.removeItem('ecocaptura-is-admin')
     }
   }
 }

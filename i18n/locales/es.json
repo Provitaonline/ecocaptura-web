@@ -44,6 +44,8 @@
     "noPhotos": "Esta captura no tiene fotos."
   },
   "captures": "Capturas",
+  "admin": "Administración",
+  "adminPlaceholder": "Panel de administración próximamente.",
   "seeCaptures": "Ver capturas",
   "addToMap": "Añadir al mapa",
   "developedBy": "Este sitio de prueba está siendo desarrollado por ",

@@ -5,6 +5,7 @@ export interface RegisterResponse {
   user?: {
     username: string
     PK: string
+    isAdmin?: boolean
   }
   message?: string
 }

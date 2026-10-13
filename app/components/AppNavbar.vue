@@ -20,6 +20,11 @@
 
           </b-navbar-item>
         </template>
+        <template v-if="auth.isAdmin && route.path !== '/admin'">
+          <b-navbar-item href="#">
+            <NuxtLink class="has-text-dark" to="/admin">{{$t('admin')}}</NuxtLink>
+          </b-navbar-item>
+        </template>
         <b-navbar-dropdown right arrowless ref="authDropdown">
           <template #label>
             <b-icon 

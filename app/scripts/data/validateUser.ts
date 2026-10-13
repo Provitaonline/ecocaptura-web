@@ -5,6 +5,7 @@ export interface ValidateResponse {
   user?: {
     username: string
     PK: string
+    isAdmin?: boolean
   }
 }
 

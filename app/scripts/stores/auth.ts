@@ -8,6 +8,7 @@ export const useAuthStore = defineStore('auth', {
     email: '',
     username: '',
     isLoggedIn: false,
+    isAdmin: false,
     isRegistrationPending: false,
     registrationError: '', 
     idToken: ''
@@ -27,7 +28,7 @@ export const useAuthStore = defineStore('auth', {
       const resolvedAccessToken = accessToken || token
       
       if (resolvedAccessToken && refreshToken && user) {
-        this.persistSession(resolvedAccessToken, refreshToken, user.username)
+        this.persistSession(resolvedAccessToken, refreshToken, user.username, user.isAdmin ?? false)
       }
     },
 
@@ -44,14 +45,15 @@ export const useAuthStore = defineStore('auth', {
       const resolvedAccessToken = accessToken || token
 
       if (response.status === 201 && resolvedAccessToken && refreshToken && user) {
-        this.persistSession(resolvedAccessToken, refreshToken, user.username)
+        this.persistSession(resolvedAccessToken, refreshToken, user.username, user.isAdmin ?? false)
         this.isRegistrationPending = false
       }
     },
 
-    persistSession(accessToken: string, refreshToken: string, username: string) {
-      tokenStorage.setTokens(accessToken, refreshToken, username)
+    persistSession(accessToken: string, refreshToken: string, username: string, isAdmin = false) {
+      tokenStorage.setTokens(accessToken, refreshToken, username, isAdmin)
       this.username = username
+      this.isAdmin = isAdmin
       this.isLoggedIn = true
     },
 
@@ -95,15 +97,18 @@ export const useAuthStore = defineStore('auth', {
       const accessToken = tokenStorage.getAccessToken()
       const refreshToken = tokenStorage.getRefreshToken()
       const username = tokenStorage.getUsername()
+      const isAdmin = tokenStorage.getIsAdmin()
 
       if (accessToken && username) {
         this.username = username
+        this.isAdmin = isAdmin
         this.isLoggedIn = true
       } else if (refreshToken && username) {
         // Access token is missing or expired, but we have a refresh token
         const newToken = await this.refreshAccessToken()
         if (newToken) {
           this.username = username
+          this.isAdmin = isAdmin
           this.isLoggedIn = true
         } else {
           this.logout()
