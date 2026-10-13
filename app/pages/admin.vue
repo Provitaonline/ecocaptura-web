@@ -1,13 +1,10 @@
 <!-- app/pages/admin.vue -->
 <template>
-  <section class="hero is-primary is-fullheight-with-navbar">
+  <section class="hero is-primary">
     <div class="hero-body">
       <div class="container has-text-centered">
-        <p class="title">
+        <p class="title is-uppercase">
           {{ $t('admin') }}
-        </p>
-        <p class="subtitle">
-          {{ $t('adminPlaceholder') }}
         </p>
       </div>
     </div>

@@ -43,8 +43,7 @@
     "noPhotos": "No photos attached to this capture."
   },
   "captures": "Captures",
-  "admin": "Admin",
-  "adminPlaceholder": "Admin panel coming soon.",
+  "admin": "Administration",
   "seeCaptures": "See captures",
   "addToMap": "Add to map",
   "developedBy": "This testing site is currently being developed by ",
