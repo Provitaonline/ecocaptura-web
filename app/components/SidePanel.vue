@@ -275,10 +275,6 @@ const fetchCaptures = async () => {
 }
 
 onMounted(async () => {
-  window.addEventListener('auth-expired', () => {
-    window.location.href = '/'
-  })
-
   await fetchCaptures()
 })
 

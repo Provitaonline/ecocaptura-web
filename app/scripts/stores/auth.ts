@@ -76,7 +76,6 @@ export const useAuthStore = defineStore('auth', {
         
         if (newAccessToken) {
           tokenStorage.setAccessToken(newAccessToken)
-          
           return newAccessToken
         }
       } catch (error) {
@@ -87,12 +86,19 @@ export const useAuthStore = defineStore('auth', {
       return null
     },
 
+    /**
+     * Explicitly logs out the user and forces a full-page redirect.
+     * Use this when a token expires mid-session or when the user clicks 'Log Out'.
+     */
     logout() {
       this.$reset()
       tokenStorage.clear()
-      window.dispatchEvent(new CustomEvent('auth-expired'))
+      window.location.href = '/'
     },
 
+    /**
+     * Initializes auth state on application startup.
+     */
     async init() {
       const accessToken = tokenStorage.getAccessToken()
       const refreshToken = tokenStorage.getRefreshToken()
@@ -111,10 +117,14 @@ export const useAuthStore = defineStore('auth', {
           this.isAdmin = isAdmin
           this.isLoggedIn = true
         } else {
+          // Token refresh failed during initialization -> clear & redirect home
           this.logout()
         }
       } else {
-        this.logout()
+        // Guest user visiting for the first time or logged out session.
+        // Silently reset state without triggering a redirect loop.
+        this.$reset()
+        tokenStorage.clear()
       }
     }
   }
