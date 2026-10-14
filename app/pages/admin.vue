@@ -153,10 +153,9 @@ const openEditModal = (user: AdminUser) => {
 }
 
 const handleUserSaved = (updatedUser: AdminUser) => {
-  const idx = users.value.findIndex(u => u.username === updatedUser.username)
-  if (idx !== -1) {
-    users.value[idx] = updatedUser
-  }
+  users.value = users.value.map(u =>
+    u.username === updatedUser.username ? updatedUser : u
+  )
 }
 
 onMounted(async () => {
