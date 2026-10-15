@@ -5,7 +5,7 @@
         <div id="cesiumContainer"></div>
 
         <TopojsonLayer :viewer="viewer" nameKey="map.overlays.aoi" :visible="overlayStates['aoi'] ?? true" v-if="viewer"/>
-		<MapbiomasLayer :autoZoom="false" :viewer="viewer" :visible="overlayStates['mapbiomas'] ?? true" v-if="viewer"/>
+        <MapbiomasLayer :autoZoom="false" :viewer="viewer" :visible="overlayStates['mapbiomas'] ?? true" v-if="viewer"/>
         <TopojsonLayer :viewer="viewer" nameKey="map.overlays.states" :visible="overlayStates['states'] ?? true" v-if="viewer"/>
         <TopojsonLayer :viewer="viewer" nameKey="map.overlays.anp" :visible="overlayStates['anp'] ?? true" v-if="viewer"/>
 
@@ -45,7 +45,7 @@
 
 <script setup lang="ts">
 import '@/assets/css/map.css'
-import { onMounted, ref, onBeforeUnmount, watch } from 'vue'
+import { onMounted, ref, onBeforeUnmount, onUnmounted, watch, reactive, shallowRef } from 'vue'
 import { 
   Ion, 
   Terrain, 
@@ -72,7 +72,8 @@ import {
   Cartographic,
   Ellipsoid,
   Cartesian2,
-  defined
+  defined,
+  Entity
 } from 'cesium'
 import 'cesium/Build/Cesium/Widgets/widgets.css'
 import ZoomControl from './mapControls/ZoomControl.vue'
@@ -83,9 +84,10 @@ import TopojsonLayer from './mapComponents/TopojsonLayer.vue'
 import LayerControl from './mapControls/LayerControl.vue'
 import ResetViewControl from './mapControls/ResetViewControl.vue'
 import { mapConfig } from '@/scripts/config'
-import { reactive } from 'vue'
 import { overlayLayers } from '@/scripts/map/overlays'
 import MapPopup from './mapComponents/MapPopup.vue'
+import { useMapStore } from '@/scripts/stores/map'
+import { useAuthStore } from '@/scripts/stores/auth'
 
 declare global {
   interface Window {
@@ -94,6 +96,8 @@ declare global {
 }
 
 const config = useRuntimeConfig()
+const mapStore = useMapStore()
+const authStore = useAuthStore()
 
 window.CESIUM_BASE_URL = '/cesium/'
 Ion.defaultAccessToken = config.public.cesiumIonToken
@@ -110,6 +114,10 @@ const emit = defineEmits<{
 const popupRef = ref<HTMLElement | null>(null)
 const viewer = shallowRef<Viewer | null>(null)
 let handler: ScreenSpaceEventHandler | null = null
+
+// Search Center Entities
+let searchCenterEntity: Entity | null = null
+let searchCenterFillEntity: Entity | null = null
 
 const popupInfo = ref({
   visible: false,
@@ -134,6 +142,121 @@ function handleClickOutside(e: MouseEvent) {
   if (popupInfo.value.visible && popupRef.value && !popupRef.value.contains(e.target as Node)) {
     closePopup()
   }
+}
+
+// ---------------------------------------------------------------------------
+// Search Center Geometry Helpers
+// ---------------------------------------------------------------------------
+function computeOffset(center: Cartographic, bearing: number, distance: number) {
+    const ellipsoid = Ellipsoid.WGS84
+    const R = ellipsoid.maximumRadius
+    const delta = distance / R
+
+    const phi1 = center.latitude
+    const lambda1 = center.longitude
+
+    const phi2 = Math.asin(
+        Math.sin(phi1) * Math.cos(delta) +
+        Math.cos(phi1) * Math.sin(delta) * Math.cos(bearing)
+    )
+
+    const lambda2 = lambda1 + Math.atan2(
+        Math.sin(bearing) * Math.sin(delta) * Math.cos(phi1),
+        Math.cos(delta) - Math.sin(phi1) * Math.sin(phi2)
+    )
+
+    return new Cartographic(lambda2, phi2)
+}
+
+function updateSearchCenterPoint(viewerInstance: Viewer, lat: number | null, lon: number | null) {
+    if (!viewerInstance || lat == null || lon == null) return
+    const position = Cartesian3.fromDegrees(lon, lat)
+
+    if (!searchCenterEntity) {
+        searchCenterEntity = viewerInstance.entities.add({
+            id: 'search-center',
+            position,
+            point: {
+                pixelSize: 12,
+                color: Color.fromCssColorString('#e38b2c').withAlpha(0.9),
+                outlineColor: Color.BLACK,
+                outlineWidth: 2,
+                disableDepthTestDistance: Number.POSITIVE_INFINITY,
+                heightReference: HeightReference.CLAMP_TO_GROUND
+            }
+        })
+    } else {
+        searchCenterEntity.position = position as any
+        searchCenterEntity.show = true
+    }
+}
+
+let searchCenterCircleEntity: Entity | null = null
+
+function makeTrueCircle(lon: number, lat: number, radiusMeters: number, segments = 128) {
+    const center = Cartographic.fromDegrees(lon, lat)
+    const positions: number[] = []
+
+    // Use <= segments so the circle closes cleanly at 2 * Math.PI
+    for (let i = 0; i <= segments; i++) {
+        const bearing = (i / segments) * 2 * Math.PI
+        const dest = computeOffset(center, bearing, radiusMeters)
+        positions.push(dest.longitude, dest.latitude)
+    }
+
+    return Cartesian3.fromRadiansArray(positions)
+}
+
+function updateSearchCenterCircle(viewerInstance: Viewer, lat: number | null, lon: number | null, radiusKm: number) {
+    if (!viewerInstance || lat == null || lon == null) return
+
+    if (!Number.isFinite(radiusKm) || radiusKm <= 0 || radiusKm > 4500) {
+        if (searchCenterCircleEntity) searchCenterCircleEntity.show = false
+        return
+    }
+
+    const radiusMeters = radiusKm * 1000
+    const circlePositions = makeTrueCircle(lon, lat, radiusMeters)
+    const lineColor = Color.fromCssColorString('#e38b2c').withAlpha(0.9)
+
+    if (!searchCenterCircleEntity) {
+        searchCenterCircleEntity = viewerInstance.entities.add({
+            id: 'search-center-circle',
+            polyline: {
+                positions: circlePositions,
+                width: 4.0,
+                material: lineColor.withAlpha(0.5),
+                clampToGround: true
+            }
+        })
+    } else {
+        searchCenterCircleEntity.polyline!.positions = circlePositions as any
+        searchCenterCircleEntity.show = true
+    }
+}
+
+function handleLongPress(position: Cartesian2) {
+    // Restrict search center capability to reviewers / admins only
+    if (!authStore.isReviewer) return
+
+    const viewerInstance = viewer.value
+    if (!viewerInstance) return
+
+    closePopup()
+
+    const scene = viewerInstance.scene
+    const ellipsoid = scene.globe.ellipsoid
+    const cartesian = viewerInstance.camera.pickEllipsoid(position, ellipsoid)
+    if (!cartesian) return
+
+    const cartographic = Cartographic.fromCartesian(cartesian)
+    const lat = CesiumMath.toDegrees(cartographic.latitude)
+    const lon = CesiumMath.toDegrees(cartographic.longitude)
+
+    mapStore.setSearchCenter(lat, lon)
+    updateSearchCenterPoint(viewerInstance, lat, lon)
+    updateSearchCenterCircle(viewerInstance, lat, lon, mapStore.radiusKm)
+    viewerInstance.scene.requestRender()
 }
 
 onMounted(() => {
@@ -174,6 +297,55 @@ onMounted(() => {
 
     if (viewer.value && !viewer.value.isDestroyed()) {
 
+        // -------------------------------------------------------------------
+        // Long-Press Detection Setup
+        // -------------------------------------------------------------------
+        let pressTimer: NodeJS.Timeout | null = null
+        let startPos: Cartesian2 | null = null
+        let cameraMoved = false
+        let lastCameraPos: Cartesian3 | null = null
+        const MOVE_THRESHOLD = 8
+
+        viewer.value.scene.postRender.addEventListener(() => {
+            const viewerInstance = viewer.value
+            if (!viewerInstance) return
+            const cam = viewerInstance.camera.positionWC
+            if (lastCameraPos) {
+                if (!Cartesian3.equals(cam, lastCameraPos)) {
+                    cameraMoved = true
+                }
+            }
+            lastCameraPos = Cartesian3.clone(cam)
+        })
+
+        handler.setInputAction((click: any) => {
+            cameraMoved = false
+            startPos = click.position
+
+            pressTimer = setTimeout(() => {
+                if (!cameraMoved) {
+                    handleLongPress(click.position)
+                }
+            }, 500)
+        }, ScreenSpaceEventType.LEFT_DOWN)
+
+        handler.setInputAction(() => {
+            if (pressTimer) clearTimeout(pressTimer)
+        }, ScreenSpaceEventType.LEFT_UP)
+
+        handler.setInputAction((movement: any) => {
+            if (!startPos) return
+            const dx = movement.endPosition.x - startPos.x
+            const dy = movement.endPosition.y - startPos.y
+
+            if (Math.abs(dx) > MOVE_THRESHOLD || Math.abs(dy) > MOVE_THRESHOLD) {
+                if (pressTimer) clearTimeout(pressTimer)
+            }
+        }, ScreenSpaceEventType.MOUSE_MOVE)
+
+        // -------------------------------------------------------------------
+        // Mouse Move & Click Handlers
+        // -------------------------------------------------------------------
         handler.setInputAction((movement: any) => {
             const viewerInstance = viewer.value
             if (!viewerInstance || viewerInstance.isDestroyed()) return
@@ -240,6 +412,16 @@ onMounted(() => {
     document.addEventListener('click', handleClickOutside)
 })
 
+// Watch store state changes (e.g., radius adjustments) to update Cesium overlay
+watch(() => [mapStore.lat, mapStore.lon, mapStore.radiusKm], ([lat, lon, radius]) => {
+    if (!viewer.value) return
+    if (lat != null && lon != null) {
+        updateSearchCenterPoint(viewer.value, lat as number, lon as number)
+        updateSearchCenterCircle(viewer.value, lat as number, lon as number, radius as number)
+        viewer.value.scene.requestRender()
+    }
+})
+
 onBeforeUnmount(() => {
   if (handler) {
     handler.destroy()
@@ -258,6 +440,14 @@ watch(() => props.captures, (newCaptures) => {
     if (!viewer.value || !newCaptures) return
 
     viewer.value.entities.removeAll()
+    
+    searchCenterEntity = null
+    searchCenterCircleEntity = null
+
+    if (mapStore.lat != null && mapStore.lon != null) {
+        updateSearchCenterPoint(viewer.value, mapStore.lat, mapStore.lon)
+        updateSearchCenterCircle(viewer.value, mapStore.lat, mapStore.lon, mapStore.radiusKm)
+    }
 
     newCaptures.forEach(item => {
         if (!item.centroidCoordinates) return
@@ -282,6 +472,8 @@ watch(() => props.captures, (newCaptures) => {
             })
         }
     })
+
+    viewer.value.scene.requestRender()
 }, { deep: true, immediate: true })
 
 function flyToCapture(centroidString: string) {
@@ -308,7 +500,6 @@ function handlePhotoEntities(payload: { captureId: string; enabled: boolean; pho
     const entityCollection = viewer.value.entities
     const primitiveCollection = viewer.value.scene.primitives
 
-    // 1. Remove all photo-related entities matching this capture ID
     const entityIdsToRemove: string[] = []
     for (const entity of entityCollection.values) {
         if (entity?.id && typeof entity.id === 'string' && (
@@ -321,7 +512,6 @@ function handlePhotoEntities(payload: { captureId: string; enabled: boolean; pho
     }
     entityIdsToRemove.forEach(id => entityCollection.removeById(id))
 
-    // 2. Remove all photo-related 3D primitives (frustums) matching this capture ID
     const primitivesToRemove: any[] = []
     for (let i = 0; i < primitiveCollection.length; i++) {
         const primitive = primitiveCollection.get(i)
@@ -331,10 +521,8 @@ function handlePhotoEntities(payload: { captureId: string; enabled: boolean; pho
     }
     primitivesToRemove.forEach(p => primitiveCollection.remove(p))
 
-    // Request a render immediately after clearing items out
     viewer.value.scene.requestRender()
 
-    // GUARD: If toggle is disabled, stop here after clearing everything out
     if (!enabled) return
 
     if (photos && photos.length > 0) {
@@ -375,7 +563,6 @@ function handlePhotoEntities(payload: { captureId: string; enabled: boolean; pho
 
                         const position = Ellipsoid.WGS84.cartographicToCartesian(cartographic)
 
-                        // Add Accuracy Circle via Polyline
                         const accuracyRadius = photo.gpsAccuracy ?? 10.0
                         try {
                             const pointsCount = 32
@@ -418,7 +605,6 @@ function handlePhotoEntities(payload: { captureId: string; enabled: boolean; pho
                             console.error('Failed to create GPS accuracy circle:', err)
                         }
 
-                        // Add Photo Marker Billboard
                         entityCollection.add({
                             id: `photo_${captureId}_${photo.photoId}`,
                             position: position,
@@ -431,7 +617,6 @@ function handlePhotoEntities(payload: { captureId: string; enabled: boolean; pho
                             properties: { photoId: photo.photoId, captureId }
                         })
 
-                        // Add Ground Polyline Arrow pointing along heading vector
                         const headingDegrees = photo.heading ?? 0
                         const headingRad = CesiumMath.toRadians(headingDegrees)
                         try {
@@ -467,11 +652,10 @@ function handlePhotoEntities(payload: { captureId: string; enabled: boolean; pho
                             console.error('Failed to create ground polyline arrow:', err)
                         }
 
-                        // Add 3D Camera Frustum Pyramid Primitive
                         try {
                             const heading = CesiumMath.toRadians(photo.heading ?? 0) - (Math.PI / 2)
                             const rawTilt = photo.tiltY ?? 0
-                            const pitch = CesiumMath.toRadians(rawTilt - 90)
+                            const pitch = CesiumMath.toRadians(rawTilt + 90)
                             const roll = CesiumMath.toRadians(photo.roll ?? 0)
                             const fov = CesiumMath.toRadians(photo.fov ?? 60)
 
@@ -515,7 +699,6 @@ function handlePhotoEntities(payload: { captureId: string; enabled: boolean; pho
                         }
                     })
 
-                    // Request a render once all asynchronous batch additions are complete
                     if (viewer.value && !viewer.value.isDestroyed()) {
                         viewer.value.scene.requestRender()
                     }
