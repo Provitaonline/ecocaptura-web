@@ -10,6 +10,7 @@ export const useAuthStore = defineStore('auth', {
     username: '',
     isLoggedIn: false,
     isAdmin: false,
+    isReviewer: false,
     isRegistrationPending: false,
     registrationError: '', 
     idToken: ''
@@ -29,7 +30,7 @@ export const useAuthStore = defineStore('auth', {
       const resolvedAccessToken = accessToken || token
       
       if (resolvedAccessToken && refreshToken && user) {
-        this.persistSession(resolvedAccessToken, refreshToken, user.username, user.isAdmin ?? false)
+        this.persistSession(resolvedAccessToken, refreshToken, user.username, user.isAdmin ?? false, user.isReviewer ?? false)
       }
     },
 
@@ -51,10 +52,11 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
-    persistSession(accessToken: string, refreshToken: string, username: string, isAdmin = false) {
-      tokenStorage.setTokens(accessToken, refreshToken, username, isAdmin)
+    persistSession(accessToken: string, refreshToken: string, username: string, isAdmin = false, isReviewer = false) {
+      tokenStorage.setTokens(accessToken, refreshToken, username, isAdmin, isReviewer)
       this.username = username
       this.isAdmin = isAdmin
+      this.isReviewer = isReviewer
       this.isLoggedIn = true
     },
 
@@ -91,10 +93,12 @@ export const useAuthStore = defineStore('auth', {
       const refreshToken = tokenStorage.getRefreshToken()
       const username = tokenStorage.getUsername()
       const isAdmin = tokenStorage.getIsAdmin()
+      const isReviewer = tokenStorage.getIsReviewer()
 
       if (accessToken && username) {
         this.username = username
         this.isAdmin = isAdmin
+        this.isReviewer = isReviewer
         this.isLoggedIn = true
       } else if (refreshToken && username) {
         // Access token is missing or expired, but we have a refresh token
@@ -102,6 +106,7 @@ export const useAuthStore = defineStore('auth', {
         if (newToken) {
           this.username = username
           this.isAdmin = isAdmin
+          this.isReviewer = isReviewer
           this.isLoggedIn = true
         } else {
           // Token refresh failed during initialization -> clear & redirect home

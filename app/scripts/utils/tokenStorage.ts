@@ -27,12 +27,20 @@ export const tokenStorage = {
     return false
   },
 
-  setTokens(accessToken: string, refreshToken: string, username: string, isAdmin = false) {
+  getIsReviewer(): boolean {
+    if (import.meta.client) {
+      return localStorage.getItem('ecocaptura-is-reviewer') === 'true'
+    }
+    return false
+  },
+
+  setTokens(accessToken: string, refreshToken: string, username: string, isAdmin = false, isReviewer = false) {
     if (import.meta.client) {
       localStorage.setItem('ecocaptura-access-token', accessToken)
       localStorage.setItem('ecocaptura-refresh-token', refreshToken)
       localStorage.setItem('ecocaptura-username', username)
       localStorage.setItem('ecocaptura-is-admin', String(isAdmin))
+      localStorage.setItem('ecocaptura-is-reviewer', String(isReviewer))
     }
   },
 
@@ -48,6 +56,7 @@ export const tokenStorage = {
       localStorage.removeItem('ecocaptura-refresh-token')
       localStorage.removeItem('ecocaptura-username')
       localStorage.removeItem('ecocaptura-is-admin')
+      localStorage.removeItem('ecocaptura-is-reviewer')
     }
   }
 }
