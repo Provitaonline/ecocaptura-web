@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { validateUser } from '~/scripts/data/validateUser'
 import { registerUser } from '~/scripts/data/registerUser'
+import { refreshAccessToken } from '~/scripts/data/refreshAccessToken'
 import { tokenStorage } from '../utils/tokenStorage'
 
 export const useAuthStore = defineStore('auth', {
@@ -57,33 +58,19 @@ export const useAuthStore = defineStore('auth', {
       this.isLoggedIn = true
     },
 
-    async refreshAccessToken(): Promise<string | null> {
-      const refreshToken = tokenStorage.getRefreshToken()
-      if (!refreshToken) return null
-
+    async refreshSession(): Promise<string | null> {
       try {
-        const config = useRuntimeConfig()
-        const response = await fetch(`${config.public.apiBase}/refresh`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ refreshToken })
-        })
-
-        if (!response.ok) throw new Error('Refresh token expired or invalid')
-
-        const data = await response.json()
-        const newAccessToken = data.accessToken || data.token
-        
-        if (newAccessToken) {
-          tokenStorage.setAccessToken(newAccessToken)
-          return newAccessToken
+        const newToken = await refreshAccessToken()
+        if (!newToken) {
+          this.logout()
+          return null
         }
+        return newToken
       } catch (error) {
         console.error('Session completely expired. Clearing tokens.', error)
         this.logout()
+        return null
       }
-
-      return null
     },
 
     /**
@@ -111,7 +98,7 @@ export const useAuthStore = defineStore('auth', {
         this.isLoggedIn = true
       } else if (refreshToken && username) {
         // Access token is missing or expired, but we have a refresh token
-        const newToken = await this.refreshAccessToken()
+        const newToken = await this.refreshSession()
         if (newToken) {
           this.username = username
           this.isAdmin = isAdmin

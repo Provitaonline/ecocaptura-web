@@ -55,7 +55,7 @@ export async function apiClient<T>(endpoint: string, options: ApiClientOptions =
     responseData?.description?.includes('expired')
 
   if (isTokenExpired) {
-    const newToken = await auth.refreshAccessToken()
+    const newToken = await auth.refreshSession()
     if (newToken) {
       response = await makeRequest(newToken)
       responseData = null
