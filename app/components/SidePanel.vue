@@ -142,6 +142,7 @@
       v-model:quality-score="editFormState.qualityScore"
       v-model:quality-reason="editFormState.qualityReason"
       :capture-id="activeEditCaptureId"
+      :username="activeEditCaptureUsername"
       @save="handleCaptureSaved"
     />
   </div>
@@ -217,6 +218,8 @@ const emit = defineEmits<{
 const captureList = ref<Capture[]>([])
 const searchString = ref('')
 const loading = ref(false)
+
+const activeEditCaptureUsername = ref<string | undefined>(undefined)
 
 const panelContainerRef = ref<HTMLElement | null>(null)
 const cardRefs = ref<Record<string, HTMLElement>>({})
@@ -421,6 +424,8 @@ const handleOpenEditModal = (captureId: string) => {
   activeEditCaptureId.value = captureId
   const details = captureDetailsMap.value[captureId]
   const captureItem = captureList.value.find(c => c.captureId === captureId)
+
+  activeEditCaptureUsername.value = captureItem?.username || details?.username
 
   editFormState.value = {
     description: details?.description ?? captureItem?.description ?? '',

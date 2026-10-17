@@ -54,11 +54,18 @@ export interface UpdateCapturePayload {
 
 export async function updateCapture(
   captureId: string | number,
-  payload: UpdateCapturePayload
+  payload: UpdateCapturePayload,
+  username?: string
 ): Promise<CaptureDetailRecord> {
   if (!captureId) {
     throw new Error('A valid captureId is required to update capture details.')
   }
 
-  return apiClient.patch<CaptureDetailRecord>(`capture/${captureId}`, payload)
+  let endpoint = `capture/${captureId}`
+  if (username) {
+    const params = new URLSearchParams({ username })
+    endpoint += `?${params.toString()}`
+  }
+
+  return apiClient.patch<CaptureDetailRecord>(endpoint, payload)
 }

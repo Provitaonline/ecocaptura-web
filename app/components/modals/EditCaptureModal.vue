@@ -184,6 +184,7 @@ const setQualityScore = (star: number) => {
 
 const props = defineProps<{
   captureId: string
+  username?: string
 }>()
 
 const emit = defineEmits<{
@@ -214,7 +215,7 @@ const handleSave = async () => {
       description: description.value,
       qualityScore: score,
       qualityReason: finalReason,
-    })
+    }, props.username) // Pass username here
 
     emit('save', {
       captureId: props.captureId,
