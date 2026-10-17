@@ -392,34 +392,6 @@ const handlePhotoToggle = async (item: Capture) => {
   })
 }
 
-const handleThumbnailError = async (captureId: string, photo: any, event: Event) => {
-  const imgElement = event.target as HTMLImageElement
-  
-  const retries = parseInt(imgElement.dataset.retries || '0', 10)
-  if (retries >= 2) return
-  imgElement.dataset.retries = (retries + 1).toString()
-
-  const cacheKey = `${photo.photoId}_thumb`
-
-  try {
-    const presignedUrls = await getDownloadPresignedUrls(captureId, [
-      { id: photo.photoId, type: 'THUMB' }
-    ])
-    const signedItem = presignedUrls.find(item => item.id === photo.photoId)
-    
-    if (signedItem?.downloadUrl) {
-      photo.thumbnailUrl = signedItem.downloadUrl
-      cachePresignedUrl(cacheKey, signedItem.downloadUrl)
-    }
-  } catch (error) {
-    console.error('Failed to refresh expired thumbnail URL:', error)
-  }
-}
-
-const closeLightbox = () => {
-  activeLightboxImage.value = null
-}
-
 // Programmatically open a capture from external triggers (like a map marker click)
 const openCaptureById = async (captureId: string) => {
   const item = captureList.value.find(c => c.captureId === captureId)
