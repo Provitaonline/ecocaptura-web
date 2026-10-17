@@ -657,7 +657,7 @@ function handlePhotoEntities(payload: { captureId: string; enabled: boolean; pho
                         try {
                             const heading = CesiumMath.toRadians(photo.heading ?? 0) - (Math.PI / 2)
                             const rawTilt = photo.tiltY ?? 0
-                            const pitch = CesiumMath.toRadians(rawTilt + 90)
+                            const pitch = CesiumMath.toRadians(rawTilt - 90)
                             const roll = CesiumMath.toRadians(photo.roll ?? 0)
                             const fov = CesiumMath.toRadians(photo.fov ?? 60)
 
