@@ -21,7 +21,7 @@ export interface GetCapturesByLocResponse {
 }
 
 export async function getCaptures(): Promise<Capture[]> {
-  const response = await apiClient<{ captures: Capture[] }>('/captures')
+  const response = await apiClient.get<{ captures: Capture[] }>('/captures')
   return response.captures || []
 }
 
@@ -35,7 +35,7 @@ export async function getCapturesByLoc(lat: number, lon: number, username?: stri
     params.append('username', username)
   }
 
-  return await apiClient<GetCapturesByLocResponse>(`/loccaptures?${params.toString()}`)
+  return apiClient.get<GetCapturesByLocResponse>(`/loccaptures?${params.toString()}`)
 }
 
 export { updateCapture, type UpdateCapturePayload } from './captureDetails'

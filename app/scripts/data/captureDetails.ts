@@ -36,7 +36,7 @@ export async function getCaptureDetails(captureId: string | number): Promise<Cap
     throw new Error('A valid captureId is required to fetch capture details.')
   }
 
-  return apiClient<CaptureDetailRecord>(`capture/${captureId}`)
+  return apiClient.get<CaptureDetailRecord>(`capture/${captureId}`)
 }
 
 export interface UpdateCapturePayload {
