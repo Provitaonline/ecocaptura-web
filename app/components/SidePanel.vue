@@ -37,17 +37,17 @@
           <div class="card-header" @click="toggleCard(item)" style="cursor: pointer;">
             <div class="card-header-title is-flex is-justify-content-space-between align-items-start">
               <div>
-              <!-- Line 1: Description in bold with 2-line clamp and ellipsis -->
-              <p class="has-text-weight-semibold mb-1 clamped-description">
-                {{ item.description || `#${item.captureId.substring(0, 8)}` }}
-              </p>
+                <p class="has-text-weight-semibold mb-1 clamped-description">
+                  {{ item.description || `#${item.captureId.substring(0, 8)}` }}
+                </p>
                 
-                <!-- Line 2: Date in yyyy-mm-dd hh:mm format -->
                 <p class="is-size-7 has-text-grey font-weight-normal mb-1">
+                  <span v-if="auth.isReviewer && item.username">
+                    {{ item.username }} &ndash;&nbsp;
+                  </span>
                   {{ formatDate(item.timestamp || item.createdAt) }}
                 </p>
                 
-                <!-- Line 3: Quality score represented as 3 stars (filled/empty) -->
                 <div v-if="item.qualityScore !== undefined" class="is-size-7 has-text-warning">
                   <span v-for="star in 3" :key="star">
                     <i :class="star <= item.qualityScore ? 'mdi mdi-star' : 'mdi mdi-star-outline'"></i>
