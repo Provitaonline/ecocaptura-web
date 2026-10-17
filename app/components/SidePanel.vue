@@ -192,13 +192,18 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
-import { getCaptures } from '~/scripts/data/captures'
+import { getCaptures, getCapturesByLoc } from '~/scripts/data/captures'
 import { getCaptureDetails } from '~/scripts/data/captureDetails'
 import type { CaptureDetailRecord } from '~/scripts/data/captureDetails'
 import type { Capture } from '@/scripts/data/captures'
 import { getDownloadPresignedUrls } from '@/scripts/data/getDownloadPresignedUrls'
 import { cachePresignedUrl, getCachedPresignedUrl } from '@/scripts/utils/presignedCache'
 import EditCaptureModal from './modals/EditCaptureModal.vue'
+import { useAuthStore } from '~/scripts/stores/auth'
+import { useMapStore } from '~/scripts/stores/map'
+
+const auth = useAuthStore()
+const mapStore = useMapStore()
 
 const { t, te } = useI18n()
 
@@ -265,7 +270,12 @@ watch(filteredCaptures, (newList) => {
 const fetchCaptures = async () => {
   loading.value = true
   try {
-    captureList.value = await getCaptures()
+    if (auth.isReviewer) {
+      const result = await getCapturesByLoc(mapStore.lat, mapStore.lon)
+      captureList.value = result.captures
+    } else {
+      captureList.value = await getCaptures()
+    }
   } catch (error) {
     console.error("Error loading captures:", error)
     captureList.value = []

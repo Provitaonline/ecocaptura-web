@@ -1,17 +1,17 @@
-// stores/map.ts
 import { defineStore } from 'pinia'
+import { searchCenterDefaults } from '~/scripts/config'
 
 interface MapState {
-  lat: number | null
-  lon: number | null
+  lat: number
+  lon: number
   radiusKm: number
 }
 
 export const useMapStore = defineStore('map', {
   state: (): MapState => ({
-    lat: null,
-    lon: null,
-    radiusKm: 200, // default radius, e.g., 0 for point-only or preset km
+    lat: searchCenterDefaults.latitude,
+    lon: searchCenterDefaults.longitude,
+    radiusKm: 200,
   }),
   actions: {
     setSearchCenter(lat: number, lon: number) {
@@ -21,9 +21,9 @@ export const useMapStore = defineStore('map', {
     setRadius(radiusKm: number) {
       this.radiusKm = radiusKm
     },
-    clearSearchCenter() {
-      this.lat = null
-      this.lon = null
+    resetSearchCenter() {
+      this.lat = searchCenterDefaults.latitude
+      this.lon = searchCenterDefaults.longitude
       this.radiusKm = 200
     }
   }
