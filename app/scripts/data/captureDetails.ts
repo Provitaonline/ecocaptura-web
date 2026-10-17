@@ -21,6 +21,7 @@ export interface CapturePhoto {
 
 export interface CaptureDetailRecord {
   captureId: string
+  username?: string
   description?: string | null
   qualityScore?: number | null
   qualityReason?: string | null
@@ -31,12 +32,18 @@ export interface CaptureDetailRecord {
   photos: CapturePhoto[]
 }
 
-export async function getCaptureDetails(captureId: string | number): Promise<CaptureDetailRecord> {
+export async function getCaptureDetails(captureId: string | number, username?: string): Promise<CaptureDetailRecord> {
   if (!captureId) {
     throw new Error('A valid captureId is required to fetch capture details.')
   }
 
-  return apiClient.get<CaptureDetailRecord>(`capture/${captureId}`)
+  let endpoint = `capture/${captureId}`
+  if (username) {
+    const params = new URLSearchParams({ username })
+    endpoint += `?${params.toString()}`
+  }
+
+  return apiClient.get<CaptureDetailRecord>(endpoint)
 }
 
 export interface UpdateCapturePayload {

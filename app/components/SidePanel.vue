@@ -69,7 +69,7 @@
               <b-switch 
                 v-model="showPhotosMap[item.captureId]" 
                 size="is-small"
-                @change="handlePhotoToggle(item.captureId)"
+                @change="handlePhotoToggle(item)"
               >
                 {{ $t('addToMap') }}
               </b-switch>
@@ -109,7 +109,7 @@
                   v-for="photo in captureDetailsMap[item.captureId]?.photos" 
                   :key="photo.photoId" 
                   class="column is-one-third"
-                  @click="emit('open-lightbox', { captureId: item.captureId, id: photo.photoId })"
+                  @click="emit('open-lightbox', { captureId: item.captureId, id: photo.photoId, username: item.username })"
                   style="cursor: pointer;"
                 >
                   <figure class="image is-square">
@@ -210,8 +210,8 @@ const { t, te } = useI18n()
 const emit = defineEmits<{
   (e: 'update:filtered-captures', list: Capture[]): void
   (e: 'select-capture', item: Capture): void
-  (e: 'toggle-capture-photos', payload: { captureId: string; enabled: boolean; photos: any[] }): void
-  (e: 'open-lightbox', photo: { captureId: string; id: string }): void
+  (e: 'toggle-capture-photos', payload: { captureId: string; enabled: boolean; photos: any[]; username?: string }): void
+  (e: 'open-lightbox', photo: { captureId: string; id: string; username?: string }): void
 }>()
 
 const captureList = ref<Capture[]>([])
@@ -291,7 +291,7 @@ onMounted(async () => {
 // --- Card & Detail Handlers ---
 
 // Isolated detail fetching logic with retry mechanism
-const fetchCaptureDetailsIfNeeded = async (captureId: string) => {
+const fetchCaptureDetailsIfNeeded = async (captureId: string, username?: string) => {
   const existingDetails = captureDetailsMap.value[captureId]
   const hasPhotos = existingDetails?.photos && existingDetails.photos.length > 0
 
@@ -306,7 +306,8 @@ const fetchCaptureDetailsIfNeeded = async (captureId: string) => {
     while (!details && attempts < 2) {
       attempts++
       try {
-        const response = await getCaptureDetails(captureId)
+        console.log('Calling fetchCaptureDetails for:', captureId, 'with username:', username)
+        const response = await getCaptureDetails(captureId, username)
         if (response && response.photos && response.photos.length > 0) {
           details = response
         }
@@ -338,7 +339,7 @@ const handleCardOpened = async (item: Capture) => {
     emit('select-capture', item)
   }
 
-  await fetchCaptureDetailsIfNeeded(item.captureId)
+  await fetchCaptureDetailsIfNeeded(item.captureId, item.username)
 }
 
 // Handle cleanup when a card closes
@@ -348,7 +349,8 @@ const handleCardClosed = (item: Capture) => {
     emit('toggle-capture-photos', {
       captureId: item.captureId,
       enabled: false,
-      photos: []
+      photos: [],
+      username: item.username
     })
   }
 }
@@ -378,14 +380,15 @@ const decodeQualityReason = (reason?: string | null): string => {
   return te(key) ? t(key) : reason
 }
 
-const handlePhotoToggle = async (captureId: string) => {
-  const isEnabled = Boolean(showPhotosMap.value[captureId])
-  const details = captureDetailsMap.value[captureId]
+const handlePhotoToggle = async (item: Capture) => {
+  const isEnabled = Boolean(showPhotosMap.value[item.captureId])
+  const details = captureDetailsMap.value[item.captureId]
 
   emit('toggle-capture-photos', {
-    captureId,
+    captureId: item.captureId,
     enabled: isEnabled,
-    photos: details?.photos || []
+    photos: details?.photos || [],
+    username: item.username
   })
 }
 

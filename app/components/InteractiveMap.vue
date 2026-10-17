@@ -107,7 +107,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  (e: 'open-lightbox', payload: { captureId: string; id: string }): void
+  (e: 'open-lightbox', payload: { captureId: string; id: string; username?: string }): void
   (e: 'open-capture', captureId: string): void
 }>()
 
@@ -374,9 +374,10 @@ onMounted(() => {
                 const properties = pickedObject.id.properties
                 const captureId = properties.captureId?.getValue()
                 const photoId = properties.photoId?.getValue()
+                const username = properties.username?.getValue()
 
                 if (captureId && photoId) {
-                    emit('open-lightbox', { captureId, id: photoId })
+                    emit('open-lightbox', { captureId, id: photoId, username })
                     return 
                 } else if (captureId) {
                     emit('open-capture', captureId)
@@ -493,10 +494,10 @@ function flyToCapture(centroidString: string) {
   }
 }
 
-function handlePhotoEntities(payload: { captureId: string; enabled: boolean; photos: any[] }) {
+function handlePhotoEntities(payload: { captureId: string; enabled: boolean; photos: any[]; username?: string }) {
     if (!viewer.value) return
 
-    const { captureId, enabled, photos } = payload
+    const { captureId, enabled, photos, username } = payload
     const entityCollection = viewer.value.entities
     const primitiveCollection = viewer.value.scene.primitives
 
@@ -605,6 +606,7 @@ function handlePhotoEntities(payload: { captureId: string; enabled: boolean; pho
                             console.error('Failed to create GPS accuracy circle:', err)
                         }
 
+                        console.log('photo', photo, item)
                         entityCollection.add({
                             id: `photo_${captureId}_${photo.photoId}`,
                             position: position,
@@ -614,7 +616,7 @@ function handlePhotoEntities(payload: { captureId: string; enabled: boolean; pho
                                 heightReference: HeightReference.NONE, 
                                 verticalOrigin: VerticalOrigin.BOTTOM
                             },
-                            properties: { photoId: photo.photoId, captureId }
+                            properties: { photoId: photo.photoId, captureId, username }
                         })
 
                         const headingDegrees = photo.heading ?? 0

@@ -1,12 +1,12 @@
 <template>
   <div class="main-layout">
     <SidePanel 
-		ref="sidePanelRef"
-      	class="sidebar" 
-		@update:filtered-captures="(list: Capture[]) => filteredCaptures = list"
-		@select-capture="handleSelectCapture"
-		@toggle-capture-photos="handleToggleCapturePhotos"
-		@open-lightbox="openLightbox"
+      ref="sidePanelRef"
+          class="sidebar" 
+      @update:filtered-captures="(list: Capture[]) => filteredCaptures = list"
+      @select-capture="handleSelectCapture"
+      @toggle-capture-photos="handleToggleCapturePhotos"
+      @open-lightbox="openLightbox"
     />
 
     <div class="map-wrapper">
@@ -14,7 +14,7 @@
         ref="mapRef"
         :captures="filteredCaptures" 
         @open-lightbox="openLightbox"
-		@open-capture="handleOpenCaptureCard"
+		    @open-capture="handleOpenCaptureCard"
       />
     </div>
 
@@ -75,7 +75,7 @@ import LightboxModal from './modals/LightboxModal.vue'
 
 const filteredCaptures = ref<Capture[]>([])
 const mapRef = ref<any>(null)
-const selectedPhoto = ref<{ captureId: string; id: string } | null>(null)
+const selectedPhoto = ref<{ captureId: string; id: string, username?: string } | null>(null)
 const sidePanelRef = ref<InstanceType<typeof SidePanel> | null>(null)
 
 function handleSelectCapture(item: Capture) {
@@ -90,7 +90,7 @@ function handleToggleCapturePhotos(payload: { captureId: string; enabled: boolea
   }
 }
 
-function openLightbox(photo: { captureId: string; id: string }) {
+function openLightbox(photo: { captureId: string; id: string; username?: string }) {
   selectedPhoto.value = photo
 }
 
