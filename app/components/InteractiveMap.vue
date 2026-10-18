@@ -169,7 +169,7 @@ function computeOffset(center: Cartographic, bearing: number, distance: number) 
 }
 
 function updateSearchCenterPoint(viewerInstance: Viewer, lat: number | null, lon: number | null) {
-    if (!viewerInstance || lat == null || lon == null) return
+    if (!viewerInstance || lat == null || lon == null || !authStore.isReviewer) return
     const position = Cartesian3.fromDegrees(lon, lat)
 
     if (!searchCenterEntity) {
@@ -208,7 +208,7 @@ function makeTrueCircle(lon: number, lat: number, radiusMeters: number, segments
 }
 
 function updateSearchCenterCircle(viewerInstance: Viewer, lat: number | null, lon: number | null, radiusKm: number) {
-    if (!viewerInstance || lat == null || lon == null) return
+    if (!viewerInstance || lat == null || lon == null || !authStore.isReviewer) return
 
     if (!Number.isFinite(radiusKm) || radiusKm <= 0 || radiusKm > 4500) {
         if (searchCenterCircleEntity) searchCenterCircleEntity.show = false
