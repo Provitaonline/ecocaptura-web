@@ -80,5 +80,5 @@
   "capturesInfoFiltered": "{filteredCount} of {count} capture within a {radius} radius, centered at {coords} | {filteredCount} of {count} captures within a {radius} radius, centered at {coords}",
   "capturesCount": "{count} capture | {count} captures",
   "capturesCountFiltered": "{filteredCount} of {count} capture | {filteredCount} of {count} captures",
-  "searchCenterHelp": "Change the search center by long tap/click directly on the map"
+  "searchCenterHelp": "Change the search center by long tap/click directly on the map."
 }
