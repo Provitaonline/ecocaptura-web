@@ -295,6 +295,12 @@ onMounted(() => {
 
     ;(window as any).viewer = viewer.value
 
+    if (mapStore.lat != null && mapStore.lon != null) {
+        updateSearchCenterPoint(viewer.value, mapStore.lat, mapStore.lon)
+        updateSearchCenterCircle(viewer.value, mapStore.lat, mapStore.lon, mapStore.radiusKm)
+        viewer.value.scene.requestRender()
+    }
+
     handler = new ScreenSpaceEventHandler(viewer.value.scene.canvas)
 
     if (viewer.value && !viewer.value.isDestroyed()) {
