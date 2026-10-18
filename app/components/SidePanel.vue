@@ -4,6 +4,43 @@
     <div class="panel-heading">
       {{ $t('captures') }}
     </div>
+
+    <div 
+      class="panel-block is-size-6 has-text-grey-dark py-2 has-text-centered" 
+      v-if="captureList.length > 0"
+    >
+      <div style="width: 100%;">
+        <!-- Reviewer spatial banner -->
+        <span v-if="auth.isReviewer && mapStore.lat != null && mapStore.lon != null">
+          {{ 
+            filteredCaptures.length !== captureList.length
+              ? $t('capturesInfoFiltered', {
+                  filteredCount: filteredCaptures.length,
+                  count: captureList.length,
+                  radius: formatRadius(mapStore.radiusKm),
+                  coords: formatCoordinates(mapStore.lat, mapStore.lon)
+                }, captureList.length)
+              : $t('capturesInfo', {
+                  count: captureList.length,
+                  radius: formatRadius(mapStore.radiusKm),
+                  coords: formatCoordinates(mapStore.lat, mapStore.lon)
+                }, captureList.length)
+          }}
+        </span>
+
+        <span v-else>
+          {{ 
+            filteredCaptures.length !== captureList.length
+              ? $t('capturesCountFiltered', {
+                  filteredCount: filteredCaptures.length,
+                  count: captureList.length
+                }, captureList.length)
+              : $t('capturesCount', { count: captureList.length }, captureList.length)
+          }}
+        </span>
+      </div>
+    </div>
+
     <div class="panel-block">
       <p class="control has-icons-left">
         <input 
@@ -499,6 +536,18 @@ const handleCaptureSaved = (payload: {
     item.qualityScore = payload.qualityScore
     item.qualityReason = payload.qualityReason
   }
+}
+
+// Format radius (supports km or conversion if needed)
+const formatRadius = (km: number) => {
+  return `${km.toFixed(1)} km`
+}
+
+// Format latitude and longitude with N/S and E/W indicators
+const formatCoordinates = (lat: number, lon: number) => {
+  const latStr = `${Math.abs(lat).toFixed(3)}° ${lat >= 0 ? 'N' : 'S'}`
+  const lonStr = `${Math.abs(lon).toFixed(3)}° ${lon >= 0 ? 'E' : 'W'}`
+  return `${latStr}, ${lonStr}`
 }
 
 // Expose methods to parent components cleanly at the bottom
