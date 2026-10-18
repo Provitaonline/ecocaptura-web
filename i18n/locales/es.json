@@ -80,5 +80,6 @@
   "capturesInfo": "{count} captura en un radio de {radius}, centrado en {coords} | {count} capturas en un radio de {radius}, centrado en {coords}",
   "capturesInfoFiltered": "{filteredCount} de {count} captura en un radio de {radius}, centrado en {coords} | {filteredCount} de {count} capturas en un radio de {radius}, centrado en {coords}",
   "capturesCount": "{count} captura | {count} capturas",
-  "capturesCountFiltered": "{filteredCount} de {count} captura | {filteredCount} de {count} capturas"
+  "capturesCountFiltered": "{filteredCount} de {count} captura | {filteredCount} de {count} capturas",
+  "searchCenterHelp": "Cambia el centro de búsqueda con una pulsación o clic largo directamente sobre el mapa."
 }

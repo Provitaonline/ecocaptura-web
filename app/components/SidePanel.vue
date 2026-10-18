@@ -41,6 +41,10 @@
       </div>
     </div>
 
+    <div class="panel-block is-size-7 has-text-centered" v-if="auth.isReviewer && mapStore.lat != null && mapStore.lon != null">
+        {{ $t('searchCenterHelp') }}
+    </div>
+
     <div class="panel-block">
       <p class="control has-icons-left">
         <input 
