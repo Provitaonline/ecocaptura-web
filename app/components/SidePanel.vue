@@ -11,22 +11,26 @@
     >
       <div style="width: 100%;">
         <!-- Reviewer spatial banner -->
-        <span v-if="auth.isReviewer && mapStore.lat != null && mapStore.lon != null">
+      <span v-if="auth.isReviewer && mapStore.lat != null && mapStore.lon != null" class="inline-flex items-center gap-1.5">
+        <span>
           {{ 
             filteredCaptures.length !== captureList.length
-              ? $t('capturesInfoFiltered', {
+              ? $t('capturesInfoFilteredPrefix', {
                   filteredCount: filteredCaptures.length,
                   count: captureList.length,
-                  radius: formatRadius(mapStore.radiusKm),
-                  coords: formatCoordinates(mapStore.lat, mapStore.lon)
+                  radius: formatRadius(mapStore.radiusKm)
                 }, captureList.length)
-              : $t('capturesInfo', {
+              : $t('capturesInfoPrefix', {
                   count: captureList.length,
-                  radius: formatRadius(mapStore.radiusKm),
-                  coords: formatCoordinates(mapStore.lat, mapStore.lon)
+                  radius: formatRadius(mapStore.radiusKm)
                 }, captureList.length)
           }}
         </span>
+
+        <span class="center-marker"></span>
+
+        <span>&nbsp;{{ formatCoordinates(mapStore.lat, mapStore.lon) }}</span>
+      </span>
 
         <span v-else>
           {{ 
@@ -229,6 +233,16 @@
 .card-header {
   background-color: rgba(85,107,47, 0.1);
   border-bottom: 1px solid rgba(85,107,47, 0.2);
+}
+
+.center-marker {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: rgba(227, 139, 44, 0.9);
+  border: 2px solid #000;
+  display: inline-block;
+  flex-shrink: 0;
 }
 </style>
 

@@ -77,8 +77,8 @@
     "obstructed": "Obstrucción",
     "other": "Otra"
   },
-  "capturesInfo": "{count} captura en un radio de {radius}, centrado en {coords} | {count} capturas en un radio de {radius}, centrado en {coords}",
-  "capturesInfoFiltered": "{filteredCount} de {count} captura en un radio de {radius}, centrado en {coords} | {filteredCount} de {count} capturas en un radio de {radius}, centrado en {coords}",
+  "capturesInfoPrefix": "{count} captura en un radio de {radius}, centrado en {coords} | {count} capturas en un radio de {radius}, centrado en ",
+  "capturesInfoFilteredPrefix": "{filteredCount} de {count} captura en un radio de {radius}, centrado en {coords} | {filteredCount} de {count} capturas en un radio de {radius}, centrado en ",
   "capturesCount": "{count} captura | {count} capturas",
   "capturesCountFiltered": "{filteredCount} de {count} captura | {filteredCount} de {count} capturas",
   "searchCenterHelp": "Cambia el centro de búsqueda con una pulsación o clic largo directamente sobre el mapa."

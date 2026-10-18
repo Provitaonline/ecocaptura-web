@@ -76,8 +76,8 @@
     "obstructed": "Obstructed",
     "other": "Other"
   },
-  "capturesInfo": "{count} capture within a {radius} radius, centered at {coords} | {count} captures within a {radius} radius, centered at {coords}",
-  "capturesInfoFiltered": "{filteredCount} of {count} capture within a {radius} radius, centered at {coords} | {filteredCount} of {count} captures within a {radius} radius, centered at {coords}",
+  "capturesInfoPrefix": "{count} capture within a {radius} radius, centered at | {count} captures within a {radius} radius, centered at ",
+  "capturesInfoFilteredPrefix": "{filteredCount} of {count} capture within a {radius} radius, centered at | {filteredCount} of {count} captures within a {radius} radius, centered at ",
   "capturesCount": "{count} capture | {count} captures",
   "capturesCountFiltered": "{filteredCount} of {count} capture | {filteredCount} of {count} captures",
   "searchCenterHelp": "Change the search center by long tap/click directly on the map."
