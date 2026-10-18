@@ -253,15 +253,22 @@ const filteredCaptures = computed(() => {
     return timeB - timeA
   })
 
-  if (!searchString.value || searchString.value.length < 2) {
+  if (!searchString.value || searchString.value.trim().length < 2) {
     return sorted
   }
 
-  const query = searchString.value.toLowerCase()
+  // Split query into individual words (tokens) and filter out empties
+  const tokens = searchString.value.toLowerCase().trim().split(/\s+/)
+
   return sorted.filter(item => {
-    const idMatch = item.captureId.toLowerCase().includes(query)
-    const descMatch = item.description?.toLowerCase().includes(query) || false
-    return idMatch || descMatch
+    const idText = item.captureId.toLowerCase()
+    const descText = item.description?.toLowerCase() || ''
+    const userText = (auth.isReviewer && item.username) ? item.username.toLowerCase() : ''
+
+    // AND condition: Every token must match at least one of the item's fields
+    return tokens.every(token => {
+      return idText.includes(token) || descText.includes(token) || userText.includes(token)
+    })
   })
 })
 
