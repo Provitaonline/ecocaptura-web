@@ -492,7 +492,7 @@ watch(() => props.captures, (newCaptures) => {
     })
 
     viewer.value.scene.requestRender()
-}, { deep: true })
+})
 
 function flyToCapture(centroidString: string) {
   if (!viewer.value || !centroidString) return
