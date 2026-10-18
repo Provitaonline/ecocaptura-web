@@ -483,7 +483,11 @@ const openCaptureById = async (captureId: string) => {
     const containerEl = panelContainerRef.value
 
     if (cardEl && containerEl) {
-      const topPos = cardEl.offsetTop
+      const cardRect = cardEl.getBoundingClientRect()
+      const containerRect = containerEl.getBoundingClientRect()
+      
+      // Calculate exact relative scroll position
+      const topPos = containerEl.scrollTop + (cardRect.top - containerRect.top)
       
       containerEl.scrollTo({
         top: topPos,
