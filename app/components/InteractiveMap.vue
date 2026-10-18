@@ -452,6 +452,21 @@ watch(() => props.captures, (newCaptures) => {
     }
     entityIdsToRemove.forEach(id => entityCollection.removeById(id))
 
+    if (viewer.value) {
+        const scenePrimitives = viewer.value.scene.primitives
+        const primitivesToRemove: any[] = []
+        
+        for (let i = 0; i < scenePrimitives.length; i++) {
+            const primitive = scenePrimitives.get(i)
+            // Check if this primitive belongs to the capture being toggled off
+            if ((primitive as any)._photoCaptureId) {
+                primitivesToRemove.push(primitive)
+            }
+        }
+        
+        primitivesToRemove.forEach(p => scenePrimitives.remove(p))
+    }
+
     newCaptures.forEach(item => {
         if (!item.centroidCoordinates) return
 
