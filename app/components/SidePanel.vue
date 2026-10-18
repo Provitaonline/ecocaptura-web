@@ -4,6 +4,43 @@
     <div class="panel-heading">
       {{ $t('captures') }}
     </div>
+
+    <div 
+      class="panel-block is-size-6 has-text-grey-dark py-2 has-text-centered" 
+      v-if="captureList.length > 0"
+    >
+      <div style="width: 100%;">
+        <!-- Reviewer spatial banner -->
+        <span v-if="auth.isReviewer && mapStore.lat != null && mapStore.lon != null">
+          {{ 
+            filteredCaptures.length !== captureList.length
+              ? $t('capturesInfoFiltered', {
+                  filteredCount: filteredCaptures.length,
+                  count: captureList.length,
+                  radius: formatRadius(mapStore.radiusKm),
+                  coords: formatCoordinates(mapStore.lat, mapStore.lon)
+                }, captureList.length)
+              : $t('capturesInfo', {
+                  count: captureList.length,
+                  radius: formatRadius(mapStore.radiusKm),
+                  coords: formatCoordinates(mapStore.lat, mapStore.lon)
+                }, captureList.length)
+          }}
+        </span>
+
+        <span v-else>
+          {{ 
+            filteredCaptures.length !== captureList.length
+              ? $t('capturesCountFiltered', {
+                  filteredCount: filteredCaptures.length,
+                  count: captureList.length
+                }, captureList.length)
+              : $t('capturesCount', { count: captureList.length }, captureList.length)
+          }}
+        </span>
+      </div>
+    </div>
+
     <div class="panel-block">
       <p class="control has-icons-left">
         <input 
@@ -37,17 +74,17 @@
           <div class="card-header" @click="toggleCard(item)" style="cursor: pointer;">
             <div class="card-header-title is-flex is-justify-content-space-between align-items-start">
               <div>
-              <!-- Line 1: Description in bold with 2-line clamp and ellipsis -->
-              <p class="has-text-weight-semibold mb-1 clamped-description">
-                {{ item.description || `#${item.captureId.substring(0, 8)}` }}
-              </p>
+                <p class="has-text-weight-semibold mb-1 clamped-description">
+                  {{ item.description || `#${item.captureId.substring(0, 8)}` }}
+                </p>
                 
-                <!-- Line 2: Date in yyyy-mm-dd hh:mm format -->
                 <p class="is-size-7 has-text-grey font-weight-normal mb-1">
+                  <span v-if="auth.isReviewer && item.username">
+                    {{ item.username }} &ndash;&nbsp;
+                  </span>
                   {{ formatDate(item.timestamp || item.createdAt) }}
                 </p>
                 
-                <!-- Line 3: Quality score represented as 3 stars (filled/empty) -->
                 <div v-if="item.qualityScore !== undefined" class="is-size-7 has-text-warning">
                   <span v-for="star in 3" :key="star">
                     <i :class="star <= item.qualityScore ? 'mdi mdi-star' : 'mdi mdi-star-outline'"></i>
@@ -69,7 +106,7 @@
               <b-switch 
                 v-model="showPhotosMap[item.captureId]" 
                 size="is-small"
-                @change="handlePhotoToggle(item.captureId)"
+                @change="handlePhotoToggle(item)"
               >
                 {{ $t('addToMap') }}
               </b-switch>
@@ -109,7 +146,7 @@
                   v-for="photo in captureDetailsMap[item.captureId]?.photos" 
                   :key="photo.photoId" 
                   class="column is-one-third"
-                  @click="emit('open-lightbox', { captureId: item.captureId, id: photo.photoId })"
+                  @click="emit('open-lightbox', { captureId: item.captureId, id: photo.photoId, username: item.username })"
                   style="cursor: pointer;"
                 >
                   <figure class="image is-square">
@@ -142,6 +179,7 @@
       v-model:quality-score="editFormState.qualityScore"
       v-model:quality-reason="editFormState.qualityReason"
       :capture-id="activeEditCaptureId"
+      :username="activeEditCaptureUsername"
       @save="handleCaptureSaved"
     />
   </div>
@@ -191,27 +229,34 @@
 </style>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
-import { getCaptures } from '~/scripts/data/captures'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
+import { getCaptures, getCapturesByLoc } from '~/scripts/data/captures'
 import { getCaptureDetails } from '~/scripts/data/captureDetails'
 import type { CaptureDetailRecord } from '~/scripts/data/captureDetails'
 import type { Capture } from '@/scripts/data/captures'
 import { getDownloadPresignedUrls } from '@/scripts/data/getDownloadPresignedUrls'
 import { cachePresignedUrl, getCachedPresignedUrl } from '@/scripts/utils/presignedCache'
 import EditCaptureModal from './modals/EditCaptureModal.vue'
+import { useAuthStore } from '~/scripts/stores/auth'
+import { useMapStore } from '~/scripts/stores/map'
+
+const auth = useAuthStore()
+const mapStore = useMapStore()
 
 const { t, te } = useI18n()
 
 const emit = defineEmits<{
   (e: 'update:filtered-captures', list: Capture[]): void
   (e: 'select-capture', item: Capture): void
-  (e: 'toggle-capture-photos', payload: { captureId: string; enabled: boolean; photos: any[] }): void
-  (e: 'open-lightbox', photo: { captureId: string; id: string }): void
+  (e: 'toggle-capture-photos', payload: { captureId: string; enabled: boolean; photos: any[]; username?: string }): void
+  (e: 'open-lightbox', photo: { captureId: string; id: string; username?: string }): void
 }>()
 
 const captureList = ref<Capture[]>([])
 const searchString = ref('')
 const loading = ref(false)
+
+const activeEditCaptureUsername = ref<string | undefined>(undefined)
 
 const panelContainerRef = ref<HTMLElement | null>(null)
 const cardRefs = ref<Record<string, HTMLElement>>({})
@@ -245,15 +290,22 @@ const filteredCaptures = computed(() => {
     return timeB - timeA
   })
 
-  if (!searchString.value || searchString.value.length < 2) {
+  if (!searchString.value || searchString.value.trim().length < 2) {
     return sorted
   }
 
-  const query = searchString.value.toLowerCase()
+  // Split query into individual words (tokens) and filter out empties
+  const tokens = searchString.value.toLowerCase().trim().split(/\s+/)
+
   return sorted.filter(item => {
-    const idMatch = item.captureId.toLowerCase().includes(query)
-    const descMatch = item.description?.toLowerCase().includes(query) || false
-    return idMatch || descMatch
+    const idText = item.captureId.toLowerCase()
+    const descText = item.description?.toLowerCase() || ''
+    const userText = (auth.isReviewer && item.username) ? item.username.toLowerCase() : ''
+
+    // AND condition: Every token must match at least one of the item's fields
+    return tokens.every(token => {
+      return idText.includes(token) || descText.includes(token) || userText.includes(token)
+    })
   })
 })
 
@@ -265,7 +317,17 @@ watch(filteredCaptures, (newList) => {
 const fetchCaptures = async () => {
   loading.value = true
   try {
-    captureList.value = await getCaptures()
+    if (auth.isReviewer && mapStore.lat != null && mapStore.lon != null) {
+      const result = await getCapturesByLoc(mapStore.lat, mapStore.lon)
+      captureList.value = result.captures
+      
+      // If the backend response provides the actual radius used/matched, update the store
+      if (result.radiusKm !== undefined) {
+        mapStore.radiusKm = result.radiusKm
+      }
+    } else {
+      captureList.value = await getCaptures()
+    }
   } catch (error) {
     console.error("Error loading captures:", error)
     captureList.value = []
@@ -278,10 +340,36 @@ onMounted(async () => {
   await fetchCaptures()
 })
 
+const handleMapSearch = async ({ lat, lon }: { lat: number; lon: number }) => {
+  loading.value = true
+  try {
+    const result = await getCapturesByLoc(lat, lon)
+    captureList.value = result.captures
+
+    // Update store coordinates and radius all at once after fetch resolves
+    mapStore.setSearchCenter(lat, lon)
+    if (result.radiusKm !== undefined) {
+      mapStore.radiusKm = result.radiusKm
+    }
+  } catch (error) {
+    console.error("Error loading captures by location:", error)
+    captureList.value = []
+  } finally {
+    loading.value = false
+  }
+}
+
+// Re-fetch captures and update circle radius whenever the search center or radius changes
+watch(() => [mapStore.lat, mapStore.lon, mapStore.radiusKm], ([newLat, newLon]) => {
+  if (auth.isReviewer && newLat != null && newLon != null) {
+    fetchCaptures()
+  }
+}, { deep: true })
+
 // --- Card & Detail Handlers ---
 
 // Isolated detail fetching logic with retry mechanism
-const fetchCaptureDetailsIfNeeded = async (captureId: string) => {
+const fetchCaptureDetailsIfNeeded = async (captureId: string, username?: string) => {
   const existingDetails = captureDetailsMap.value[captureId]
   const hasPhotos = existingDetails?.photos && existingDetails.photos.length > 0
 
@@ -296,7 +384,7 @@ const fetchCaptureDetailsIfNeeded = async (captureId: string) => {
     while (!details && attempts < 2) {
       attempts++
       try {
-        const response = await getCaptureDetails(captureId)
+        const response = await getCaptureDetails(captureId, username)
         if (response && response.photos && response.photos.length > 0) {
           details = response
         }
@@ -328,7 +416,7 @@ const handleCardOpened = async (item: Capture) => {
     emit('select-capture', item)
   }
 
-  await fetchCaptureDetailsIfNeeded(item.captureId)
+  await fetchCaptureDetailsIfNeeded(item.captureId, item.username)
 }
 
 // Handle cleanup when a card closes
@@ -338,7 +426,8 @@ const handleCardClosed = (item: Capture) => {
     emit('toggle-capture-photos', {
       captureId: item.captureId,
       enabled: false,
-      photos: []
+      photos: [],
+      username: item.username
     })
   }
 }
@@ -368,43 +457,16 @@ const decodeQualityReason = (reason?: string | null): string => {
   return te(key) ? t(key) : reason
 }
 
-const handlePhotoToggle = async (captureId: string) => {
-  const isEnabled = Boolean(showPhotosMap.value[captureId])
-  const details = captureDetailsMap.value[captureId]
+const handlePhotoToggle = async (item: Capture) => {
+  const isEnabled = Boolean(showPhotosMap.value[item.captureId])
+  const details = captureDetailsMap.value[item.captureId]
 
   emit('toggle-capture-photos', {
-    captureId,
+    captureId: item.captureId,
     enabled: isEnabled,
-    photos: details?.photos || []
+    photos: details?.photos || [],
+    username: item.username
   })
-}
-
-const handleThumbnailError = async (captureId: string, photo: any, event: Event) => {
-  const imgElement = event.target as HTMLImageElement
-  
-  const retries = parseInt(imgElement.dataset.retries || '0', 10)
-  if (retries >= 2) return
-  imgElement.dataset.retries = (retries + 1).toString()
-
-  const cacheKey = `${photo.photoId}_thumb`
-
-  try {
-    const presignedUrls = await getDownloadPresignedUrls(captureId, [
-      { id: photo.photoId, type: 'THUMB' }
-    ])
-    const signedItem = presignedUrls.find(item => item.id === photo.photoId)
-    
-    if (signedItem?.downloadUrl) {
-      photo.thumbnailUrl = signedItem.downloadUrl
-      cachePresignedUrl(cacheKey, signedItem.downloadUrl)
-    }
-  } catch (error) {
-    console.error('Failed to refresh expired thumbnail URL:', error)
-  }
-}
-
-const closeLightbox = () => {
-  activeLightboxImage.value = null
 }
 
 // Programmatically open a capture from external triggers (like a map marker click)
@@ -421,8 +483,11 @@ const openCaptureById = async (captureId: string) => {
     const containerEl = panelContainerRef.value
 
     if (cardEl && containerEl) {
-      // Calculate the card's position relative to the scroll container
-      const topPos = cardEl.offsetTop - containerEl.offsetTop
+      const cardRect = cardEl.getBoundingClientRect()
+      const containerRect = containerEl.getBoundingClientRect()
+      
+      // Calculate exact relative scroll position
+      const topPos = containerEl.scrollTop + (cardRect.top - containerRect.top)
       
       containerEl.scrollTo({
         top: topPos,
@@ -436,6 +501,8 @@ const handleOpenEditModal = (captureId: string) => {
   activeEditCaptureId.value = captureId
   const details = captureDetailsMap.value[captureId]
   const captureItem = captureList.value.find(c => c.captureId === captureId)
+
+  activeEditCaptureUsername.value = captureItem?.username || details?.username
 
   editFormState.value = {
     description: details?.description ?? captureItem?.description ?? '',
@@ -475,10 +542,24 @@ const handleCaptureSaved = (payload: {
   }
 }
 
-// Expose methods to the parent component
+// Format radius (supports km or conversion if needed)
+const formatRadius = (km: number) => {
+  return `${km.toFixed(1)} km`
+}
+
+// Format latitude and longitude with N/S and E/W indicators
+const formatCoordinates = (lat: number, lon: number) => {
+  const latStr = `${Math.abs(lat).toFixed(3)}° ${lat >= 0 ? 'N' : 'S'}`
+  const lonStr = `${Math.abs(lon).toFixed(3)}° ${lon >= 0 ? 'E' : 'W'}`
+  return `${latStr}, ${lonStr}`
+}
+
+// Expose methods to parent components cleanly at the bottom
 defineExpose({
+  fetchCaptures,
   openCaptureById,
   handleCardOpened,
-  toggleCard
+  toggleCard,
+  handleMapSearch
 })
 </script>

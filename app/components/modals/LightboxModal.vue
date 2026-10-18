@@ -127,7 +127,7 @@ import panzoom, { type PanZoom } from 'panzoom'
 import { nextTick, onUnmounted, ref, watch } from 'vue'
 
 const props = defineProps<{
-  photo: { captureId: string; id: string } | null
+  photo: { captureId: string; id: string; username?: string } | null
 }>()
 
 const emit = defineEmits<{
@@ -164,7 +164,7 @@ watch(() => props.photo, async (newPhoto) => {
   if (cachedUrl) {
     activeLightboxImage.value = cachedUrl
     isImageLoading.value = false
-    isActualImageLoading.value = true 
+    isActualImageLoading.value = false
     return
   }
 
@@ -173,13 +173,14 @@ watch(() => props.photo, async (newPhoto) => {
   isActualImageLoading.value = true
 
   try {
-    const presignedUrls = await getDownloadPresignedUrls(newPhoto.captureId, [
-      { id: newPhoto.id, type: 'PHOTO' }
-    ])
+    const presignedUrls = await getDownloadPresignedUrls(
+      newPhoto.captureId, 
+      [{ id: newPhoto.id, type: 'PHOTO' }],
+      newPhoto.username
+    )
     const signedItem = presignedUrls.find(item => item.id === newPhoto.id)
     if (signedItem?.downloadUrl) {
       activeLightboxImage.value = signedItem.downloadUrl
-      // Cache it for subsequent opens
       cachePresignedUrl(newPhoto.id, signedItem.downloadUrl)
     }
   } catch (error) {

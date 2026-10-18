@@ -24,3 +24,8 @@ export const mapConfig = {
 		cameraFrustumColor: '#3273dc'
 	}
 } as const
+
+export const searchCenterDefaults = {
+  latitude: 7.45,
+  longitude: -65.6
+} as const

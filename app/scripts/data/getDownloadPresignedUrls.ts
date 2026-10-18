@@ -19,14 +19,13 @@ interface PresignResponse {
 
 export async function getDownloadPresignedUrls(
   captureId: string, 
-  items: PresignItem[]
+  items: PresignItem[],
+  username?: string
 ): Promise<PresignedUrlResult[]> {
-  const data = await apiClient<PresignResponse>('/presign-download', {
-    method: 'POST',
-    body: JSON.stringify({
-      captureId,
-      items
-    })
+  const data = await apiClient.post<PresignResponse>('/presign-download', {
+    captureId,
+    items,
+    username
   })
 
   return data.presignedUrls
