@@ -15,6 +15,7 @@
         :captures="filteredCaptures" 
         @open-lightbox="openLightbox"
 		    @open-capture="handleOpenCaptureCard"
+        @search-location="(coords) => sidePanelRef?.handleMapSearch(coords)"
       />
     </div>
 
@@ -101,4 +102,5 @@ function closeLightbox() {
 function handleOpenCaptureCard(captureId: string) {
 	sidePanelRef.value?.openCaptureById(captureId)
 }
+
 </script>

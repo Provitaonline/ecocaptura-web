@@ -109,6 +109,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'open-lightbox', payload: { captureId: string; id: string; username?: string }): void
   (e: 'open-capture', captureId: string): void
+  (e: 'search-location', payload: { lat: number; lon: number }): void 
 }>()
 
 const popupRef = ref<HTMLElement | null>(null)
@@ -236,7 +237,6 @@ function updateSearchCenterCircle(viewerInstance: Viewer, lat: number | null, lo
 }
 
 function handleLongPress(position: Cartesian2) {
-    // Restrict search center capability to reviewers / admins only
     if (!authStore.isReviewer) return
 
     const viewerInstance = viewer.value
@@ -253,10 +253,12 @@ function handleLongPress(position: Cartesian2) {
     const lat = CesiumMath.toDegrees(cartographic.latitude)
     const lon = CesiumMath.toDegrees(cartographic.longitude)
 
-    mapStore.setSearchCenter(lat, lon)
+    // 1. Instantly draw just the point for zero-lag feedback
     updateSearchCenterPoint(viewerInstance, lat, lon)
-    updateSearchCenterCircle(viewerInstance, lat, lon, mapStore.radiusKm)
     viewerInstance.scene.requestRender()
+
+    // 2. Trigger the fetch/store update in SidePanel
+    emit('search-location', { lat, lon })
 }
 
 onMounted(() => {
@@ -440,15 +442,15 @@ onUnmounted(() => {
 watch(() => props.captures, (newCaptures) => {
     if (!viewer.value || !newCaptures) return
 
-    viewer.value.entities.removeAll()
+    const entityCollection = viewer.value.entities
+    const entityIdsToRemove: string[] = []
     
-    searchCenterEntity = null
-    searchCenterCircleEntity = null
-
-    if (mapStore.lat != null && mapStore.lon != null) {
-        updateSearchCenterPoint(viewer.value, mapStore.lat, mapStore.lon)
-        updateSearchCenterCircle(viewer.value, mapStore.lat, mapStore.lon, mapStore.radiusKm)
+    for (const entity of entityCollection.values) {
+        if (entity?.id && typeof entity.id === 'string' && entity.id !== 'search-center' && entity.id !== 'search-center-circle') {
+            entityIdsToRemove.push(entity.id)
+        }
     }
+    entityIdsToRemove.forEach(id => entityCollection.removeById(id))
 
     newCaptures.forEach(item => {
         if (!item.centroidCoordinates) return
@@ -475,7 +477,7 @@ watch(() => props.captures, (newCaptures) => {
     })
 
     viewer.value.scene.requestRender()
-}, { deep: true, immediate: true })
+}, { deep: true })
 
 function flyToCapture(centroidString: string) {
   if (!viewer.value || !centroidString) return

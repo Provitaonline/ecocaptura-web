@@ -192,7 +192,7 @@
 </style>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { getCaptures, getCapturesByLoc } from '~/scripts/data/captures'
 import { getCaptureDetails } from '~/scripts/data/captureDetails'
 import type { CaptureDetailRecord } from '~/scripts/data/captureDetails'
@@ -273,9 +273,14 @@ watch(filteredCaptures, (newList) => {
 const fetchCaptures = async () => {
   loading.value = true
   try {
-    if (auth.isReviewer) {
+    if (auth.isReviewer && mapStore.lat != null && mapStore.lon != null) {
       const result = await getCapturesByLoc(mapStore.lat, mapStore.lon)
       captureList.value = result.captures
+      
+      // If the backend response provides the actual radius used/matched, update the store
+      if (result.radiusKm !== undefined) {
+        mapStore.radiusKm = result.radiusKm
+      }
     } else {
       captureList.value = await getCaptures()
     }
@@ -290,6 +295,32 @@ const fetchCaptures = async () => {
 onMounted(async () => {
   await fetchCaptures()
 })
+
+const handleMapSearch = async ({ lat, lon }: { lat: number; lon: number }) => {
+  loading.value = true
+  try {
+    const result = await getCapturesByLoc(lat, lon)
+    captureList.value = result.captures
+
+    // Update store coordinates and radius all at once after fetch resolves
+    mapStore.setSearchCenter(lat, lon)
+    if (result.radiusKm !== undefined) {
+      mapStore.radiusKm = result.radiusKm
+    }
+  } catch (error) {
+    console.error("Error loading captures by location:", error)
+    captureList.value = []
+  } finally {
+    loading.value = false
+  }
+}
+
+// Re-fetch captures and update circle radius whenever the search center or radius changes
+watch(() => [mapStore.lat, mapStore.lon, mapStore.radiusKm], ([newLat, newLon]) => {
+  if (auth.isReviewer && newLat != null && newLon != null) {
+    fetchCaptures()
+  }
+}, { deep: true })
 
 // --- Card & Detail Handlers ---
 
@@ -309,7 +340,6 @@ const fetchCaptureDetailsIfNeeded = async (captureId: string, username?: string)
     while (!details && attempts < 2) {
       attempts++
       try {
-        console.log('Calling fetchCaptureDetails for:', captureId, 'with username:', username)
         const response = await getCaptureDetails(captureId, username)
         if (response && response.photos && response.photos.length > 0) {
           details = response
@@ -409,8 +439,7 @@ const openCaptureById = async (captureId: string) => {
     const containerEl = panelContainerRef.value
 
     if (cardEl && containerEl) {
-      // Calculate the card's position relative to the scroll container
-      const topPos = cardEl.offsetTop - containerEl.offsetTop
+      const topPos = cardEl.offsetTop
       
       containerEl.scrollTo({
         top: topPos,
@@ -465,10 +494,12 @@ const handleCaptureSaved = (payload: {
   }
 }
 
-// Expose methods to the parent component
+// Expose methods to parent components cleanly at the bottom
 defineExpose({
+  fetchCaptures,
   openCaptureById,
   handleCardOpened,
-  toggleCard
+  toggleCard,
+  handleMapSearch
 })
 </script>
