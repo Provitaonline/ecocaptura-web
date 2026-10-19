@@ -50,7 +50,8 @@
     "north_arrow": "Norte",
     "layer": "Mapas base y capas",
     "look_down": "Mirar hacia abajo",
-    "reset_view": "Restablecer vista"
+    "reset_view": "Restablecer vista",
+    "tapToInteract": "Toca para interactuar con el mapa"
   },
   "errors": {
     "noCaptures": "No se encontraron capturas.",

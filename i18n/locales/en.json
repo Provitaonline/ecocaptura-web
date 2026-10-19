@@ -49,7 +49,8 @@
     "layer": "Basemaps & overlays",
     "north_arrow": "North",
     "look_down": "Look down",
-    "reset_view": "Reset view"
+    "reset_view": "Reset view",
+    "tapToInteract": "Tap to interact with map"
   },
   "errors": {
     "noCaptures": "No matching captures found.",
