@@ -28,9 +28,9 @@
         <b-navbar-dropdown right arrowless ref="authDropdown">
           <template #label>
             <b-icon 
-              icon="account" 
+              :icon="auth.isReviewer ? 'account-check' : 'account'" 
               size="is-medium" 
-              :type="auth.isLoggedIn ? 'is-success' : 'is-dark'"
+              :type="auth.isAdmin ? 'is-danger' : (auth.isLoggedIn ? 'is-success' : 'is-dark')"
             />
           </template>
 
