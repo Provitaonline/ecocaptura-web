@@ -50,7 +50,7 @@
     "north_arrow": "North",
     "look_down": "Look down",
     "reset_view": "Reset view",
-    "tapToInteract": "Tap to interact with map"
+    "tapToInteract": "Tap to interact"
   },
   "errors": {
     "noCaptures": "No matching captures found.",
