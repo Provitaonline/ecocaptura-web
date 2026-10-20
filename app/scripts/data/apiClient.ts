@@ -1,6 +1,6 @@
 import { useRuntimeConfig } from '#imports'
-import { useAuthStore } from '~/scripts/stores/auth'
-import { tokenStorage } from '../utils/tokenStorage'
+import { useAuthStore } from '@/scripts/stores/auth'
+import { tokenStorage } from '@/scripts/utils/tokenStorage'
 
 export interface ApiClientOptions extends Omit<RequestInit, 'body'> {
   body?: any

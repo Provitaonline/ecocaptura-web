@@ -1,5 +1,5 @@
 import { defineNuxtRouteMiddleware, navigateTo } from '#imports'
-import { useAuthStore } from '~/scripts/stores/auth'
+import { useAuthStore } from '@/scripts/stores/auth'
 
 export default defineNuxtRouteMiddleware(async (to, from) => {
   if (import.meta.client) {

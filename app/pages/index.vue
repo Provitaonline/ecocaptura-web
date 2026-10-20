@@ -17,7 +17,7 @@
 
 <script setup lang="ts">
 import type { Collections } from '@nuxt/content'
-import { useAuthStore } from '~/scripts/stores/auth'
+import { useAuthStore } from '@/scripts/stores/auth'
 
 const { locale } = useI18n()
 const auth = useAuthStore()

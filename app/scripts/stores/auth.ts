@@ -1,8 +1,8 @@
 import { defineStore } from 'pinia'
-import { validateUser } from '~/scripts/data/validateUser'
-import { registerUser } from '~/scripts/data/registerUser'
-import { refreshAccessToken } from '~/scripts/data/refreshAccessToken'
-import { tokenStorage } from '../utils/tokenStorage'
+import { validateUser } from '@/scripts/data/validateUser'
+import { registerUser } from '@/scripts/data/registerUser'
+import { refreshAccessToken } from '@/scripts/data/refreshAccessToken'
+import { tokenStorage } from '@/scripts/utils/tokenStorage'
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({

@@ -121,9 +121,9 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { getUsers } from '~/scripts/data/adminUsers'
-import type { AdminUser } from '~/scripts/data/adminUsers'
-import EditUserModal from '~/components/modals/EditUserModal.vue'
+import { getUsers } from '@/scripts/data/adminUsers'
+import type { AdminUser } from '@/scripts/data/adminUsers'
+import EditUserModal from '@/components/modals/EditUserModal.vue'
 
 definePageMeta({
   middleware: ['auth']

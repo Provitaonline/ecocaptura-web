@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { searchCenterDefaults } from '~/scripts/config'
+import { searchCenterDefaults } from '@/scripts/config'
 
 interface MapState {
   lat: number

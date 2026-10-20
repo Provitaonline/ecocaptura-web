@@ -67,9 +67,9 @@
 </template>
 
 <script setup lang="ts">
-import RegisterModal from '~/components/modals/RegisterModal.vue'
+import RegisterModal from '@/components/modals/RegisterModal.vue'
 import { onMounted } from 'vue'
-import { useAuthStore } from '~/scripts/stores/auth'
+import { useAuthStore } from '@/scripts/stores/auth'
 
 const route = useRoute()
 const config = useRuntimeConfig()

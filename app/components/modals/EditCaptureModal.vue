@@ -95,7 +95,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import enLocale from '@@/i18n/locales/en.json'
-import { updateCapture } from '~/scripts/data/captureDetails'
+import { updateCapture } from '@/scripts/data/captureDetails'
 
 const { t } = useI18n()
 

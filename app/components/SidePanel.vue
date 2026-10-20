@@ -248,15 +248,15 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
-import { getCaptures, getCapturesByLoc } from '~/scripts/data/captures'
-import { getCaptureDetails } from '~/scripts/data/captureDetails'
-import type { CaptureDetailRecord } from '~/scripts/data/captureDetails'
+import { getCaptures, getCapturesByLoc } from '@/scripts/data/captures'
+import { getCaptureDetails } from '@/scripts/data/captureDetails'
+import type { CaptureDetailRecord } from '@/scripts/data/captureDetails'
 import type { Capture } from '@/scripts/data/captures'
 import { getDownloadPresignedUrls } from '@/scripts/data/getDownloadPresignedUrls'
 import { cachePresignedUrl, getCachedPresignedUrl } from '@/scripts/utils/presignedCache'
 import EditCaptureModal from './modals/EditCaptureModal.vue'
-import { useAuthStore } from '~/scripts/stores/auth'
-import { useMapStore } from '~/scripts/stores/map'
+import { useAuthStore } from '@/scripts/stores/auth'
+import { useMapStore } from '@/scripts/stores/map'
 
 const auth = useAuthStore()
 const mapStore = useMapStore()

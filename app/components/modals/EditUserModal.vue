@@ -66,9 +66,9 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import type { AdminUser } from '~/scripts/data/adminUsers'
-import { updateUserRoles } from '~/scripts/data/adminUsers'
-import { useAuthStore } from '~/scripts/stores/auth'
+import type { AdminUser } from '@/scripts/data/adminUsers'
+import { updateUserRoles } from '@/scripts/data/adminUsers'
+import { useAuthStore } from '@/scripts/stores/auth'
 
 const props = defineProps<{
   user: AdminUser | null

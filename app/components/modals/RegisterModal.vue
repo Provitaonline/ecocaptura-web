@@ -42,7 +42,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { useAuthStore } from '~/scripts/stores/auth'
+import { useAuthStore } from '@/scripts/stores/auth'
 
 const auth = useAuthStore()
 const username = ref('')
