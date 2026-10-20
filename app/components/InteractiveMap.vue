@@ -629,7 +629,6 @@ function handlePhotoEntities(payload: { captureId: string; enabled: boolean; pho
                             console.error('Failed to create GPS accuracy circle:', err)
                         }
 
-                        console.log('photo', photo, item)
                         entityCollection.add({
                             id: `photo_${captureId}_${photo.photoId}`,
                             position: position,

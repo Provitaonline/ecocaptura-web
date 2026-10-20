@@ -147,7 +147,6 @@ const filteredUsers = computed(() => {
 })
 
 const openEditModal = (user: AdminUser) => {
-  console.log('open edit')
   selectedUser.value = user
   isEditModalActive.value = true
 }
